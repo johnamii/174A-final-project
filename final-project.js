@@ -70,8 +70,8 @@ class Starship extends defs.Cube {
         for (let i = 0; i < 24; i++){
             this.arrays.color.push(color(.9, .9, .9, 1));
         }
-
-        this.position = this.arrays.position;
+        
+        //defs.Capped_Cylinder.insert_transformed_copy_into(this, [10, 10], wheel_transform);
     }
 }
 
@@ -86,7 +86,8 @@ export class ProjectScene extends Scene {
             ground: new Ground(),
             axis: new Axis(),
             skybox: new Skybox(),
-            building: new Building()
+            building: new Building(),
+            wheel: new defs.Capped_Cylinder(10, 10)
         };
 
         // *** Materials
@@ -100,11 +101,12 @@ export class ProjectScene extends Scene {
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
-
         this.sammy = new Starship();
+        this.sammyWidth = 0.7;
         this.sammyHeight = 0.5;
+        this.sammyLength = 1;
         this.starship_transform = Mat4.identity()
-            .times(Mat4.scale(.7, this.sammyHeight, 1))
+            .times(Mat4.scale(this.sammyWidth, this.sammyHeight, this.sammyLength))
             .times(Mat4.translation(0, 5, 5));
     }
 
@@ -186,6 +188,29 @@ export class ProjectScene extends Scene {
         this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//back right building
 
         this.sammy.draw(context, program_state, this.starship_transform, this.materials.test);
+
+
+        // TODO: REDO ALL OF THIS wheel stuff and put it in a function
+        let wheelW = 1/this.sammyWidth / 9;
+        let wheelH = 1/this.sammyHeight / 3;
+        let wheelL = 1/this.sammyLength / 3;
+        let wheel_transform = this.starship_transform
+            .times(Mat4.scale(wheelW, wheelH, wheelL))
+            .times(Mat4.translation(-6.5, -1, -2))
+            .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
+            
+        //draw first
+        this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        for (let i = 0; i < 2; i++){
+            wheel_transform = wheel_transform.times(Mat4.translation(-2, 0, 0));
+            this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        }
+        wheel_transform = wheel_transform.times(Mat4.translation(0, 0, 13));
+        this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        for (let i = 0; i < 2; i++){
+            wheel_transform = wheel_transform.times(Mat4.translation(2, 0, 0));
+            this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        }
 
         // get y coordinate of center of starship, fall until hitting ground
         let transformY = this.starship_transform[1][3] - this.sammyHeight;
