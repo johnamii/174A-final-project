@@ -7,7 +7,6 @@ const {
 class Skybox extends defs.Cube{
     constructor() {
         super();
-
         this.arrays.color = [];
         for (let i = 0; i < 24; i++){
             this.arrays.color.push(color(.5, .8, 1, .9));
@@ -51,7 +50,18 @@ class Axis extends Shape {
         }
     }
 }
+class Building extends defs.Cube{
+    constructor(){
+        super();
 
+        this.arrays.color = [];
+        for (let i = 0; i < 24; i++){
+            this.arrays.color.push(color(.69, .42, .165, 1));
+        }
+
+        this.position = this.arrays.position;
+    }
+}
 class Starship extends defs.Cube {
     constructor(){
         super();
@@ -76,13 +86,16 @@ export class ProjectScene extends Scene {
             ground: new Ground(),
             axis: new Axis(),
             skybox: new Skybox(),
+            building: new Building()
         };
 
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
-            white: new Material(new defs.Basic_Shader())
+            white: new Material(new defs.Basic_Shader()),
+            brick: new Material(new defs.Phong_Shader(),
+                {ambient: .5, diffusivity: .6, color: hex_color("#b06b2a")}),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -95,19 +108,23 @@ export class ProjectScene extends Scene {
             .times(Mat4.translation(0, 5, 5));
     }
 
-    move_starship(control) {
-        if (control === "Forward"){
+    move_starship(control) {//check if keyup/keydown as a bool is the way to solve it i think
+        if (control === "Forward"){//bc it only registers a keypress once for a second, then repeats
             this.starship_transform = this.starship_transform.times(Mat4.translation(0, 0, -0.2));
         }
         else if (control === "Backward"){
-            this.starship_transform = this.starship_transform.times(Mat4.translation(0, 0, 0.2));
+            this.starship_transform = this.starship_transform.times(Mat4.translation(0, 0, .2));
         }
+        //testing
         else if (control === "Left"){
             this.starship_transform = this.starship_transform.times(Mat4.rotation(Math.PI/24, 0, 1, 0));
         }
-        else if (control === "Right")[
-            this.starship_transform = this.starship_transform.times(Mat4.rotation(-Math.PI/24, 0, 1, 0))
-        ]
+        else if (control === "Right") {
+            this.starship_transform = this.starship_transform.times(Mat4.rotation(-Math.PI / 24, 0, 1, 0));
+        }
+        else {
+            //this will never run bc it only calls when a button is pressed - gonna have to smooth it out in "display"
+        }
     }
 
     make_control_panel() {
@@ -124,7 +141,7 @@ export class ProjectScene extends Scene {
 
     display(context, program_state) {
         // display():  Called once per frame of animation.
-  
+
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
@@ -134,19 +151,39 @@ export class ProjectScene extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
+        //lights
         const light_position = vec4(0, 5, 5, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
-
+        //time and initialize
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
 
         this.shapes.axis.draw(context, program_state, model_transform, this.materials.white, 'LINES');
 
+        //sky
         let sky_transform = Mat4.identity().times(Mat4.scale(100, 100, 100));
         this.shapes.skybox.draw(context, program_state, sky_transform, this.materials.white);
- 
+
+        //ground
         let ground_transform = Mat4.identity().times(Mat4.scale(30, 0, 60));
         this.shapes.ground.draw(context, program_state, ground_transform, this.materials.white);
+
+        //buildings
+        let bxdist = 25;    //how close the buildings are to the edge (left right on map)
+        let bheight = 4;    //height of building
+        let bzdist = 30;    //how far buildings are from center (up down on map)
+        let build_transform = Mat4.identity().times(Mat4.translation(-bxdist,bheight, -bzdist))
+            .times(Mat4.scale(4, bheight, 20));
+        this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//top left building
+        build_transform = Mat4.identity().times(Mat4.translation(bxdist,bheight, -bzdist))
+            .times(Mat4.scale(4, bheight, 20));
+        this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//top right building
+        build_transform = Mat4.identity().times(Mat4.translation(bxdist,bheight, bzdist))
+            .times(Mat4.scale(4, bheight, 20));
+        this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//back left building
+        build_transform = Mat4.identity().times(Mat4.translation(-bxdist,bheight, bzdist))
+            .times(Mat4.scale(4, bheight, 20));
+        this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//back right building
 
         this.sammy.draw(context, program_state, this.starship_transform, this.materials.test);
 
