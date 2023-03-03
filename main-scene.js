@@ -37,10 +37,7 @@ Object.assign(defs,
     {ProjectScene}
 );
 
-// ******************** End extra step
-
-// (Can define Main_Scene's class here)
-
+//const Main_Scene = Inertia_Demo;
 const Main_Scene = ProjectScene;
 const Additional_Scenes = [];
 

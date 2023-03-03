@@ -4,39 +4,13 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
-class SkyBox extends Shape{
+class Skybox extends defs.Cube{
     constructor() {
-        super("position", "normal",);
-        // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
-        this.arrays.position = Vector3.cast(
-            [-1, -1, -1], [1, -1, -1], [-1, -1, 1],
-            [1, -1, 1], [1, 1, -1], [-1, 1, -1], 
-            [1, 1, 1], [-1, 1, 1], [-1, -1, -1], 
-            [-1, -1, 1], [-1, 1, -1], [-1, 1, 1], 
-            [1, -1, 1], [1, -1, -1], [1, 1, 1], 
-            [1, 1, -1], [-1, -1, 1], [1, -1, 1], 
-            [-1, 1, 1], [1, 1, 1], [1, -1, -1], 
-            [-1, -1, -1], [1, 1, -1], [-1, 1, -1]
-        );
-        this.arrays.normal = Vector3.cast(
-            [0, -1, 0], [0, -1, 0], [0, -1, 0],
-            [0, -1, 0], [0, 1, 0], [0, 1, 0], 
-            [0, 1, 0], [0, 1, 0], [-1, 0, 0],
-            [-1, 0, 0], [-1, 0, 0], [-1, 0, 0],
-            [1, 0, 0], [1, 0, 0], [1, 0, 0], 
-            [1, 0, 0], [0, 0, 1], [0, 0, 1], 
-            [0, 0, 1], [0, 0, 1], [0, 0, -1], 
-            [0, 0, -1], [0, 0, -1], [0, 0, -1]
-            );
-        // Arrange the vertices into a square shape in texture space too:
-        this.indices.push(
-            0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
-            14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22
-        );
+        super();
 
         this.arrays.color = [];
         for (let i = 0; i < 24; i++){
-            this.arrays.color.push(color(.5, .6, .9, .9));
+            this.arrays.color.push(color(.5, .8, 1, .9));
         }
     }
 }
@@ -56,7 +30,7 @@ class Ground extends Shape{
 
         this.arrays.color = [];
         for (let i = 0; i < 6; i++){
-            this.arrays.color.push(color(.3, .5, .3, .9));
+            this.arrays.color.push(color(.3, .5, .3, 1));
         }
     }
 }
@@ -78,6 +52,19 @@ class Axis extends Shape {
     }
 }
 
+class Starship extends defs.Cube {
+    constructor(){
+        super();
+
+        this.arrays.color = [];
+        for (let i = 0; i < 24; i++){
+            this.arrays.color.push(color(.9, .9, .9, 1));
+        }
+
+        this.position = this.arrays.position;
+    }
+}
+
 export class ProjectScene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -88,7 +75,7 @@ export class ProjectScene extends Scene {
             torus: new defs.Torus(15, 15),
             ground: new Ground(),
             axis: new Axis(),
-            skybox: new SkyBox()
+            skybox: new Skybox(),
         };
 
         // *** Materials
@@ -99,12 +86,40 @@ export class ProjectScene extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+
+
+        this.sammy = new Starship();
+        this.sammyHeight = 0.5;
+        this.starship_transform = Mat4.identity()
+            .times(Mat4.scale(.7, this.sammyHeight, 1))
+            .times(Mat4.translation(0, 5, 5));
+    }
+
+    move_starship(control) {
+        if (control === "Forward"){
+            this.starship_transform = this.starship_transform.times(Mat4.translation(0, 0, -0.2));
+        }
+        else if (control === "Backward"){
+            this.starship_transform = this.starship_transform.times(Mat4.translation(0, 0, 0.2));
+        }
+        else if (control === "Left"){
+            this.starship_transform = this.starship_transform.times(Mat4.rotation(Math.PI/24, 0, 1, 0));
+        }
+        else if (control === "Right")[
+            this.starship_transform = this.starship_transform.times(Mat4.rotation(-Math.PI/24, 0, 1, 0))
+        ]
     }
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
+        this.key_triggered_button("Explore Area", ["Control", "0"], () => this.attached = undefined);
+        this.key_triggered_button("Starship", ["Control", "1"], () => this.attached = () => this.starship_transform);
         this.new_line();
+        this.key_triggered_button("Starship Forward", ["ArrowUp"], () => this.move_starship("Forward"));
+        this.key_triggered_button("Starship Backward", ["ArrowDown"], () => this.move_starship("Backward"));
+        this.new_line();
+        this.key_triggered_button("Starship Turn Left", ["ArrowLeft"], () => this.move_starship("Left"));
+        this.key_triggered_button("Starship Turn Right", ["ArrowRight"], () => this.move_starship("Right"));
     }
 
     display(context, program_state) {
@@ -126,12 +141,31 @@ export class ProjectScene extends Scene {
         let model_transform = Mat4.identity();
 
         this.shapes.axis.draw(context, program_state, model_transform, this.materials.white, 'LINES');
+
+        let sky_transform = Mat4.identity().times(Mat4.scale(100, 100, 100));
+        this.shapes.skybox.draw(context, program_state, sky_transform, this.materials.white);
  
-        model_transform = model_transform.times(Mat4.scale(20, 0, 20));
-        this.shapes.ground.draw(context, program_state, model_transform, this.materials.white);
-        
-        model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.scale(50, 50, 50));
-        this.shapes.skybox.draw(context, program_state, model_transform, this.materials.white);
+        let ground_transform = Mat4.identity().times(Mat4.scale(30, 0, 60));
+        this.shapes.ground.draw(context, program_state, ground_transform, this.materials.white);
+
+        this.sammy.draw(context, program_state, this.starship_transform, this.materials.test);
+
+        // get y coordinate of center of starship, fall until hitting ground
+        let transformY = this.starship_transform[1][3] - this.sammyHeight;
+        if (transformY > 0.1){
+            let fall = -0.1;
+            this.starship_transform = this.starship_transform.times(Mat4.translation(0, fall, 0));
+        }
+
+        // handle changes to camera
+        if (this.attached !== undefined){
+
+            let desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 1, 6)));
+            let blend = desired.map((x, i) => Vector.from( program_state.camera_inverse[i] ).mix(x, 0.1));
+            program_state.set_camera(blend);
+        }
+        else{
+            program_state.set_camera(this.initial_camera_location);
+        }
     }
 }
