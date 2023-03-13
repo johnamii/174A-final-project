@@ -4,6 +4,10 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Texture, Scene,
 } = tiny;
 
+export function getPosVector(matrix) {
+    return vec3(matrix[0][3], matrix[1][3], matrix[2][3]);
+}
+
 export class Axis extends Shape {
     constructor(){
         super("position");
@@ -60,9 +64,14 @@ export class Wall extends Boundary {
 }
 
 export class BoundaryBox extends Shape {
-    constructor(){
+    constructor(dimensions, position){
         super("position", "normal", "texture_coord");
 
+        this.transform = Mat4.identity()
+            .times(Mat4.translation(position[0], position[1], position[2]))
+            .times(Mat4.scale(dimensions[0], dimensions[1], dimensions[2]))
+            
+        
         this.boundary_transforms = []
 
         for (let i = 0; i < 3; i++)
@@ -93,6 +102,10 @@ class Entity extends defs.Cube {
             ;
     }
 
+    isCat(){
+        return false;
+    }
+
     checkCollisions(entities){
 
     }
@@ -105,7 +118,8 @@ class Entity extends defs.Cube {
 
     }
 
-    doMovememnt(dt){
+    doMovement(dt){
+        
         let speed = dt * this.meters_per_frame * this.speed_multiplier;
         if (this.thrust[1] < 0) {
             this.thrust[1] += 0.05
@@ -130,21 +144,70 @@ export class Starship extends Entity {
         this.dims = [0.7, 0.5, 1];
         this.transform = this.transform.times(Mat4.scale(this.dims[0], this.dims[1], this.dims[2]))
         //defs.Capped_Cylinder.insert_transformed_copy_into(this, [10, 10], wheel_transform);
+
+
+        // TEMP WHEEL STUFF, REMOVE ONCE WE HAVE A MODEL
+
+        let wheelW = 1/this.dims[0] / 9;
+        let wheelH = 1/this.dims[1] / 3;
+        let wheelL = 1/this.dims[2] / 3;
+        let wheel_transform = this.transform
+            .times(Mat4.scale(wheelW, wheelH, wheelL))
+            .times(Mat4.translation(-6.5, -1, -2))
+            .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
+            
+        // //draw first
+        // this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        // for (let i = 0; i < 2; i++){
+        //     wheel_transform = wheel_transform.times(Mat4.translation(-2, 0, 0));
+        //     this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        // }
+        // wheel_transform = wheel_transform.times(Mat4.translation(0, 0, 13));
+        // this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        // for (let i = 0; i < 2; i++){
+        //     wheel_transform = wheel_transform.times(Mat4.translation(2, 0, 0));
+        //     this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        // }
+
+        //defs.Capped_Cylinder.insert_transformed_copy_into(this, [10, 10], wheel_transform)
     }
 
     doMovement(dt){
-        
+        super.doMovement(dt);
     }
 }
 
 export class PowellCat extends Entity {
-    constructor(start_pos){
-        super(start_pos);
+    constructor(start_pos, speed_mult){
+        super(start_pos, speed_mult);
 
-
+        this.transform = this.transform.times(Mat4.scale(0.5, 0.5, 0.5));
+        this.thrust[2] = 1;
     }
 
+    isCat(){ return true; }
 
+    doMovement(dt, target_vector) {
+        super.doMovement(dt);
+
+        let pos = getPosVector(this.transform);
+        
+        let orientation = vec3(this.transform[0][0], this.transform[1][0], this.transform[2][0]);
+
+        let dir_vector = pos.minus(target_vector);
+
+        let dot = dir_vector.dot(orientation);
+        
+        if (dot < 0) {
+            this.turn = -1;
+        }
+        else if (dot > 0) {
+            this.turn = 1;
+        }
+        else {
+            this.turn = 0;
+        }
+    }
 }
 
 export class Target extends Entity {

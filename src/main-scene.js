@@ -1,6 +1,6 @@
 import {defs, tiny} from './provided/common.js';
 import { 
-    Skybox, Starship, Ground, BoundaryBox, Axis, PowellCat, PowerUp
+    Skybox, Starship, Ground, BoundaryBox, Axis, PowellCat, PowerUp, getPosVector
 } from "./shape-defs.js";
 
 // Pull these names into this module's scope for convenience:
@@ -18,8 +18,8 @@ class Main_Scene extends Scene {
             grass: new Ground(),
             axis: new Axis(),
             skybox: new Skybox(),
-            building: new BoundaryBox(),
-            wheel: new defs.Capped_Cylinder(10, 10),
+            //building: new BoundaryBox(),
+            // wheel: new defs.Capped_Cylinder(10, 10),
         };
 
         // *** Materials
@@ -47,18 +47,28 @@ class Main_Scene extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.worldDims = [30, 0, 60];
+        this.buildingDims = [];
 
         this.sammy = new Starship(vec3(0, 2, 0), 1);
 
+        let bxdist = 25;    //how close the buildings are to the edge (left right on map)
+        let bheight = 4;    //height of building
+        let bzdist = 30;    //how far buildings are from center (up down on map)
+
         this.boundaries = [
-            new BoundaryBox() // invisible border
+            // invisible border boundary
+            new BoundaryBox(vec3(30, 50, 60), vec3(0, 0, 0)),
+            // buildings
+            new BoundaryBox(vec3(4, bheight, 20), vec3(-bxdist, bheight, -bzdist)), // top left
+            new BoundaryBox(vec3(4, bheight, 20), vec3(bxdist, bheight, -bzdist)), // top right
+            new BoundaryBox(vec3(4, bheight, 20), vec3(bxdist, bheight, bzdist)), // bottom right
+            new BoundaryBox(vec3(4, bheight, 20), vec3(-bxdist, bheight, bzdist)), // bottom left
         ];
 
         this.entities = [
-            new PowellCat(vec3(-10, 0, 0), 1)
+            new PowellCat(vec3(-10, 1, 0), 0.5)
         ];
 
-        
     }
 
     make_control_panel(){
@@ -91,6 +101,13 @@ class Main_Scene extends Scene {
         //ground
         let grass_transform = Mat4.identity().times(Mat4.scale(30, 0, 60)).times(Mat4.rotation(Math.PI/2, 1, 0, 0));
         this.shapes.grass.draw(context, program_state, grass_transform, this.materials.grass);
+
+        let sidewalk_transform = Mat4.identity()
+            .times(Mat4.translation(-10, 0.05, 0))
+            .times(Mat4.scale(2, 1, 20))
+            .times(Mat4.rotation(Math.PI/2, 1, 0, 0))
+
+        this.shapes.grass.draw(context, program_state, sidewalk_transform, this.materials.sidewalk);
     }
 
     display(context, program_state) {// Called once per frame of animation.
@@ -105,66 +122,27 @@ class Main_Scene extends Scene {
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
-        let sidewalk_transform = Mat4.identity()
-            .times(Mat4.translation(-10, 0.05, 0))
-            .times(Mat4.scale(2, 1, 20))
-            .times(Mat4.rotation(Math.PI/2, 1, 0, 0))
+        this.draw_world(context, program_state);  
 
-        this.draw_world(context, program_state);
-            
-        this.shapes.grass.draw(context, program_state, sidewalk_transform, this.materials.sidewalk);
+        // draw boundaries
 
-        //buildings
-        let bxdist = 25;    //how close the buildings are to the edge (left right on map)
-        let bheight = 4;    //height of building
-        let bzdist = 30;    //how far buildings are from center (up down on map)
-        let build_transform = Mat4.identity().times(Mat4.translation(-bxdist,bheight, -bzdist))
-            .times(Mat4.scale(4, bheight, 20));
-        this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//top left building
-        build_transform = Mat4.identity().times(Mat4.translation(bxdist,bheight, -bzdist))
-            .times(Mat4.scale(4, bheight, 20));
-        this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//top right building
-        build_transform = Mat4.identity().times(Mat4.translation(bxdist,bheight, bzdist))
-            .times(Mat4.scale(4, bheight, 20));
-        this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//back left building
-        build_transform = Mat4.identity().times(Mat4.translation(-bxdist,bheight, bzdist))
-            .times(Mat4.scale(4, bheight, 20));
-        this.shapes.building.draw(context, program_state, build_transform, this.materials.brick);//back right building
-
-        this.sammy.draw(context, program_state, this.sammy.transform, this.materials.test);
-
-
-        // TODO: REDO ALL OF THIS wheel stuff and put it in a function
-            //  instead use shape.insert_transformed_copy... figure out how to add color to that
-        let wheelW = 1/this.sammy.dims[0] / 9;
-        let wheelH = 1/this.sammy.dims[1] / 3;
-        let wheelL = 1/this.sammy.dims[2] / 3;
-        let wheel_transform = this.sammy.transform
-            .times(Mat4.scale(wheelW, wheelH, wheelL))
-            .times(Mat4.translation(-6.5, -1, -2))
-            .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
-            
-        //draw first
-        this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
-        for (let i = 0; i < 2; i++){
-            wheel_transform = wheel_transform.times(Mat4.translation(-2, 0, 0));
-            this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
-        }
-        wheel_transform = wheel_transform.times(Mat4.translation(0, 0, 13));
-        this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
-        for (let i = 0; i < 2; i++){
-            wheel_transform = wheel_transform.times(Mat4.translation(2, 0, 0));
-            this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
+        for (let i = 0; i < this.boundaries.length; i++) {
+            let mat = i === 0 ? this.materials.test.override({color: hex_color("ffffff", 0)}) : this.materials.brick;
+            this.boundaries[i].draw(context, program_state, this.boundaries[i].transform, mat);
         }
 
         // draw entities
 
-        for (let i = 0; i < this.entities.length; i++){
-            this.entities[i].draw(context, program_state, this.entities[i].transform, this.materials.test);
-        }
+        this.sammy.draw(context, program_state, this.sammy.transform, this.materials.test);
+        this.sammy.doMovement(dt);
 
-        // move entities 
-        this.sammy.doMovememnt(dt);
+        for (let i = 0; i < this.entities.length; i++){
+            this.entities[i].draw(context, program_state, this.entities[i].transform, this.materials.test.override({color: hex_color("111111")}));
+
+            // move entities
+            let target = this.entities[i].isCat() ? getPosVector(this.sammy.transform) : null;
+            this.entities[i].doMovement(dt, target);
+        }
 
         // handle changes to camera
         if (this.attached !== undefined){
