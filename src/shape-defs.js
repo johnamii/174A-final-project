@@ -1,4 +1,5 @@
 import {defs, tiny} from './provided/common.js';
+import { Shape_From_File } from './provided/obj-file.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Texture, Scene,
@@ -7,6 +8,8 @@ const {
 export function getPosVector(matrix) {
     return vec3(matrix[0][3], matrix[1][3], matrix[2][3]);
 }
+
+const meters_per_frame = 10;
 
 export class Axis extends Shape {
     constructor(){
@@ -25,6 +28,36 @@ export class Axis extends Shape {
     }
 }
 
+class Cube_Outline extends Shape {
+    constructor() {
+        super("position", "color");
+        //  DONE (Requirement 5).
+        this.arrays.position = Vector3.cast(
+            [1, 1, 1], [-1, 1, 1],
+            [1, 1, 1], [1, -1, 1],
+            [1, 1, 1], [1, 1, -1],
+            [-1, -1, -1], [-1, -1, 1],
+            [-1, -1, -1], [-1, 1, -1],
+            [-1, -1, -1], [1, -1, -1],
+            [-1, -1, 1], [1, -1, 1],
+            [-1, -1, 1], [-1, 1, 1],
+            [1, -1, -1], [1, -1, 1],
+            [1, -1, -1], [1, 1, -1],
+            [-1, 1, -1], [-1, 1, 1],
+            [-1, 1, -1], [1, 1, -1]
+        );
+
+        // When a set of lines is used in graphics, you should think of the list entries as broken down into pairs; each pair of vertices will be drawn as a line segment.
+        // Note: since the outline is rendered with Basic_shader, you need to redefine the position and color of each vertex
+
+        this.indices = false;
+        this.arrays.color = [];
+        for (let i = 0; i < 24; i++) {
+            this.arrays.color.push(color(1, 1, 1, 0.33));
+        }
+    }
+}
+
 export class Skybox extends defs.Cube{
     constructor() {
         super();
@@ -34,6 +67,10 @@ export class Skybox extends defs.Cube{
         }
     }
 }
+
+////////////////////////////////////////////////////////
+// BOUNDARY CLASS DEFINITIONS
+/////////////////////////////////////////////////////////
 
 class Boundary extends defs.Square {
     constructor(){
@@ -87,12 +124,16 @@ export class BoundaryBox extends Shape {
     }
 }
 
-class Entity extends defs.Cube {
+//////////////////////////////
+// ENTITY CLASS DEFINITIONS
+///////////////////////////////
+
+class Entity extends Cube_Outline {
     constructor(start_pos, speed_mult){
         super();
 
         this.speed_multiplier = speed_mult ?? 1;
-        this.meters_per_frame = 10;
+        this.speed = this.speed_multiplier * meters_per_frame;
         this.thrust = vec3(0, 0, 0);
         this.turn = 0;
         this.dims = [1, 1, 1];
@@ -100,10 +141,17 @@ class Entity extends defs.Cube {
             .times(Mat4.translation(start_pos[0], start_pos[1], start_pos[2]))
             //.times(Mat4.scale(this.dims[0], this.dims[1], this.dims[2]))
             ;
+
+        this.model = null;
+        this.material = new Material(new defs.Basic_Shader());
     }
 
     isCat(){ return false; }
     isBoundary(){ return false; }
+
+    transformModel(){
+        return this.transform;
+    }
 
     checkCollisions(entities){
 
@@ -119,9 +167,9 @@ class Entity extends defs.Cube {
 
     doMovement(dt){
         
-        let speed = dt * this.meters_per_frame * this.speed_multiplier;
-        if (this.thrust[1] < 0) {
-            this.thrust[1] += 0.05
+        let speed = dt * this.speed;
+        if (this.thrust[1] > 0) {
+            this.thrust[1] -= 0.05
         }
 
          // get y coordinate of center of starship, fall until hitting ground
@@ -132,7 +180,7 @@ class Entity extends defs.Cube {
          }
 
         this.transform.post_multiply(Mat4.rotation(.025 * this.turn, 0, 1, 0));
-        this.transform.post_multiply(Mat4.translation(...this.thrust.times(-speed)));
+        this.transform.post_multiply(Mat4.translation(...this.thrust.times(speed)));
     }
 }
 
@@ -140,35 +188,12 @@ export class Starship extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
         
-        this.dims = [0.7, 0.5, 1];
-        this.transform = this.transform.times(Mat4.scale(this.dims[0], this.dims[1], this.dims[2]))
-        //defs.Capped_Cylinder.insert_transformed_copy_into(this, [10, 10], wheel_transform);
+        this.model = new Shape_From_File("assets/starship.obj");
+        this.model_mat = new Material(new defs.Phong_Shader(), {color: hex_color("#ffffff")});
+    }
 
-
-        // TEMP WHEEL STUFF, REMOVE ONCE WE HAVE A MODEL
-
-        let wheelW = 1/this.dims[0] / 9;
-        let wheelH = 1/this.dims[1] / 3;
-        let wheelL = 1/this.dims[2] / 3;
-        let wheel_transform = this.transform
-            .times(Mat4.scale(wheelW, wheelH, wheelL))
-            .times(Mat4.translation(-6.5, -1, -2))
-            .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
-            
-        // //draw first
-        // this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
-        // for (let i = 0; i < 2; i++){
-        //     wheel_transform = wheel_transform.times(Mat4.translation(-2, 0, 0));
-        //     this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
-        // }
-        // wheel_transform = wheel_transform.times(Mat4.translation(0, 0, 13));
-        // this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
-        // for (let i = 0; i < 2; i++){
-        //     wheel_transform = wheel_transform.times(Mat4.translation(2, 0, 0));
-        //     this.shapes.wheel.draw(context, program_state, wheel_transform, this.materials.test.override({color: color(.1, .1, .1, 1)}))
-        // }
-
-        //defs.Capped_Cylinder.insert_transformed_copy_into(this, [10, 10], wheel_transform)
+    transformModel(){
+        return this.transform.times(Mat4.translation(0.3, 0, -0.2)).times(Mat4.scale(1.1, 1.1, 1.1))
     }
 
     doMovement(dt){
@@ -180,11 +205,26 @@ export class PowellCat extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
 
-        this.transform = this.transform.times(Mat4.scale(0.5, 0.5, 0.5));
-        this.thrust[2] = 1;
+        this.transform = this.transform
+            .times(Mat4.scale(0.8, 0.8, 0.8));
+        this.thrust[2] = -1;
+
+        this.material = this.material.override({color: hex_color('#222222')});
+
+        this.model = new Shape_From_File("assets/garfield.obj");
+        
+        this.model_mat = new Material(new defs.Textured_Phong(), {
+            texture: new Texture("assets/garfield.png"),
+            color: hex_color("#000000"),
+            ambient:1, diffusivity: 0.1, specularity: 0.1
+        })
     }
 
     isCat(){ return true; }
+
+    transformModel(){
+        return this.transform.times(Mat4.rotation(Math.PI, 0, 1, 0));
+    }
 
     doMovement(dt, target_vector) {
         super.doMovement(dt);
@@ -226,6 +266,10 @@ export class Student extends Entity {
         this.transform = this.transform
             .times(Mat4.scale(0.5, 2, 0.5))
             .times(Mat4.translation(0, 3, 0));
+
+        this.max_z = -15;
+
+        this.material = this.material.override({color: color(Math.random(), Math.random(), Math.random(), 1)})
     }
     isBoundary(){ return true; }
 
@@ -233,7 +277,14 @@ export class Student extends Entity {
         super.doMovement(dt);
 
         let pos = getPosVector(this.transform);
+        if (pos[2] > this.max_z) {
+            this.thrust[2] = 1;
+        }
+        else {
+            this.thrust[2] = 0;
+        }
     }
+
 }
 
 export class PowerUp extends Entity {
