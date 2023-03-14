@@ -1,6 +1,6 @@
 import {defs, tiny} from './provided/common.js';
 import { 
-    Skybox, Starship, Ground, BoundaryBox, Axis, PowellCat, PowerUp, getPosVector
+    Skybox, Starship, Ground, BoundaryBox, Axis, PowellCat, PowerUp, getPosVector, Student
 } from "./shape-defs.js";
 
 // Pull these names into this module's scope for convenience:
@@ -57,7 +57,7 @@ class Main_Scene extends Scene {
 
         this.boundaries = [
             // invisible border boundary
-            new BoundaryBox(vec3(30, 50, 60), vec3(0, 0, 0)),
+            new BoundaryBox(vec3(30, 25, 60), vec3(0, 24.99, 0)),
             // buildings
             new BoundaryBox(vec3(4, bheight, 20), vec3(-bxdist, bheight, -bzdist)), // top left
             new BoundaryBox(vec3(4, bheight, 20), vec3(bxdist, bheight, -bzdist)), // top right
@@ -66,7 +66,8 @@ class Main_Scene extends Scene {
         ];
 
         this.entities = [
-            new PowellCat(vec3(-10, 1, 0), 0.5)
+            new PowellCat(vec3(-10, 1, 0), 0.5),
+            new Student(vec3(-5, 0, 5), 0.25)
         ];
 
     }
@@ -82,7 +83,7 @@ class Main_Scene extends Scene {
         this.key_triggered_button("Starship Turn Left", ["ArrowLeft"], () => this.sammy.turn = 1, undefined, () => this.sammy.turn = 0);
         this.key_triggered_button("Starship Turn Right", ["ArrowRight"], () => this.sammy.turn = -1, undefined, () => this.sammy.turn = 0);
         this.new_line();
-        this.key_triggered_button("Starship Jump", ["Control"], () => {if (this.sammy.transform[1][3] - this.sammy.defs[1] < 0.1) {this.sammy.thrust[1] = -6}})
+        this.key_triggered_button("Starship Jump", ["Shift"], () => {if (this.sammy.transform[1][3] - this.sammy.dims[1] < 0.1) {this.sammy.thrust[1] = -6}})
     } 
 
     draw_world(context, program_state){
@@ -99,7 +100,9 @@ class Main_Scene extends Scene {
         this.shapes.axis.draw(context, program_state, model_transform, this.materials.white, 'LINES');
 
         //ground
-        let grass_transform = Mat4.identity().times(Mat4.scale(30, 0, 60)).times(Mat4.rotation(Math.PI/2, 1, 0, 0));
+        let grass_transform = Mat4.identity()
+            .times(Mat4.scale(30, 0.01, 60))
+            .times(Mat4.rotation(Math.PI/2, 1, 0, 0));
         this.shapes.grass.draw(context, program_state, grass_transform, this.materials.grass);
 
         let sidewalk_transform = Mat4.identity()
@@ -112,26 +115,34 @@ class Main_Scene extends Scene {
 
     display(context, program_state) {// Called once per frame of animation.
 
+        //////////////////////////////////
+        // SET UP CONTEXT
+        //////////////////////////////////
+
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             program_state.set_camera(this.initial_camera_location);
         }
-
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
-
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         this.draw_world(context, program_state);  
 
-        // draw boundaries
+        ////////////////////////////////////////////
+        // CREATE BOUNDARIES
+        ////////////////////////////////////////////
 
         for (let i = 0; i < this.boundaries.length; i++) {
+
             let mat = i === 0 ? this.materials.test.override({color: hex_color("ffffff", 0)}) : this.materials.brick;
+
             this.boundaries[i].draw(context, program_state, this.boundaries[i].transform, mat);
         }
 
-        // draw entities
+        ////////////////////////////////////////////
+        // DRAW AND MOVE ENTITIES
+        ////////////////////////////////////////////
 
         this.sammy.draw(context, program_state, this.sammy.transform, this.materials.test);
         this.sammy.doMovement(dt);
@@ -144,10 +155,16 @@ class Main_Scene extends Scene {
             this.entities[i].doMovement(dt, target);
         }
 
-        // handle changes to camera
+        ////////////////////////////////////////////
+        // HANDLE CAMERA 
+        ////////////////////////////////////////////
+
         if (this.attached !== undefined){
 
-            let desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 1, 6)));
+            let desired = Mat4.inverse(this.attached()
+                .times(Mat4.translation(0, 5, 10))
+                .times(Mat4.rotation(-0.2, 1, 0, 0))
+                );
             let blend = desired.map((x, i) => Vector.from( program_state.camera_inverse[i] ).mix(x, 0.1));
             program_state.set_camera(blend);
         }

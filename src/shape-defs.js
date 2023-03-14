@@ -102,9 +102,8 @@ class Entity extends defs.Cube {
             ;
     }
 
-    isCat(){
-        return false;
-    }
+    isCat(){ return false; }
+    isBoundary(){ return false; }
 
     checkCollisions(entities){
 
@@ -190,14 +189,16 @@ export class PowellCat extends Entity {
     doMovement(dt, target_vector) {
         super.doMovement(dt);
 
+        // position of cat
         let pos = getPosVector(this.transform);
-        
+        // get orientation of cat
         let orientation = vec3(this.transform[0][0], this.transform[1][0], this.transform[2][0]);
-
+        
         let dir_vector = pos.minus(target_vector);
 
         let dot = dir_vector.dot(orientation);
         
+        // turn to left or right based on dot product
         if (dot < 0) {
             this.turn = -1;
         }
@@ -222,9 +223,11 @@ export class Student extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
 
-
+        this.transform = this.transform
+            .times(Mat4.scale(0.5, 2, 0.5))
+            .times(Mat4.translation(0, 3, 0));
     }
-
+    isBoundary(){ return true; }
 
 }
 
