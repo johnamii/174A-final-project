@@ -229,6 +229,11 @@ export class Student extends Entity {
     }
     isBoundary(){ return true; }
 
+    doMovement(dt){
+        super.doMovement(dt);
+
+        let pos = getPosVector(this.transform);
+    }
 }
 
 export class PowerUp extends Entity {
