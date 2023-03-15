@@ -113,8 +113,8 @@ export class BoundaryBox extends Shape {
 
         for (let i = 0; i < 3; i++)
                 for (let j = 0; j < 2; j++) {
-                    const square_transform = Mat4.rotation(i == 0 ? Math.PI / 2 : 0, 1, 0, 0)
-                        .times(Mat4.rotation(Math.PI * j - (i == 1 ? Math.PI / 2 : 0), 0, 1, 0))
+                    const square_transform = Mat4.rotation(i === 0 ? Math.PI / 2 : 0, 1, 0, 0)
+                        .times(Mat4.rotation(Math.PI * j - (i === 1 ? Math.PI / 2 : 0), 0, 1, 0))
                         .times(Mat4.translation(0, 0, 1));
                     // Calling this function of a Square (or any Shape) copies it into the specified
                     // Shape (this one) at the specified matrix offset (square_transform):
@@ -166,20 +166,31 @@ class Entity extends Cube_Outline {
     }
 
     doMovement(dt){
-        
+
         let speed = dt * this.speed;
         if (this.thrust[1] > 0) {
-            this.thrust[1] -= 0.05
+            this.thrust[1] -= 0.05 * dt* (400);
         }
-
+        else{
+            this.thrust[1] = 0;
+        }
          // get y coordinate of center of starship, fall until hitting ground
          let transformY = this.transform[1][3] - this.dims[1];
-         if (transformY > 0.1 ){
-             let fall = -0.2;
-             this.transform = this.transform.times(Mat4.translation(0, fall, 0));
-         }
 
-        this.transform.post_multiply(Mat4.rotation(.025 * this.turn, 0, 1, 0));
+        if (transformY > 0.2 ){
+             let fall = -0.2 * dt * 60;
+             let x = transformY+fall;
+             if(x>0) {
+                 this.transform = this.transform.times(Mat4.translation(0, fall, 0));
+             }
+             else{
+                 this.transform[1][3] = 1;
+             }
+         }
+        else{
+            this.transform[1][3] = 1;
+        }
+        this.transform.post_multiply(Mat4.rotation(dt*4 * this.turn, 0, 1, 0));
         this.transform.post_multiply(Mat4.translation(...this.thrust.times(speed)));
     }
 }
@@ -262,27 +273,24 @@ export class Target extends Entity {
 export class Student extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
-
+        this.thrust[2] = 1 * speed_mult;
         this.transform = this.transform
             .times(Mat4.scale(0.5, 2, 0.5))
             .times(Mat4.translation(0, 3, 0));
 
         this.max_z = -15;
-
+        //this.model = new Shape_From_File("assets/garfield.obj");
         this.material = this.material.override({color: color(Math.random(), Math.random(), Math.random(), 1)})
     }
     isBoundary(){ return true; }
 
     doMovement(dt){
         super.doMovement(dt);
+        if(Math.floor(Math.random()*500)===69){
+            let sign = 2*Math.floor(2*Math.random()-1)+1;
+            this.transform = this.transform.times(Mat4.rotation(Math.PI/2*sign,0,1,0))
+        }
 
-        let pos = getPosVector(this.transform);
-        if (pos[2] > this.max_z) {
-            this.thrust[2] = 1;
-        }
-        else {
-            this.thrust[2] = 0;
-        }
     }
 
 }

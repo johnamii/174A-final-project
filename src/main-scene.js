@@ -52,7 +52,7 @@ class Main_Scene extends Scene {
 
         this.entities = [
             new PowellCat(vec3(-10, 1, 0), 0.5),
-            new Student(vec3(-10, 0, 5), 0.25)
+            new Student(vec3(-10, 0, 5), 0.5)
         ];
 
         let bxdist = 25;    //how close the buildings are to the edge (left right on map)
