@@ -129,6 +129,7 @@ class Main_Scene extends Scene {
             }),
             interface: new Material(new defs.Phong_Shader(),{
                 color: hex_color("#000000", 0.9),
+                specularity: 0,
             }),
             cat: new Material(new defs.Textured_Phong(), {
                 texture: new Texture("assets/garfield.png"),
@@ -267,7 +268,24 @@ class Main_Scene extends Scene {
             this.shapes.text.set_string(strings[i], context.context);
             this.shapes.text.draw(context, program_state, textTransform.times(Mat4.scale(.05, .05, .05)), this.materials.text_image);
             textTransform.post_multiply(Mat4.translation(0, 0, 0));
-            console.log("uhh");
+        }
+    }
+    drawGameOver(context, program_state){
+        let interfaceTransform = program_state.camera_transform
+            .times(Mat4.translation(0, 0, -3))
+            .times(Mat4.scale(2, 1, 1));
+        this.startScreen.draw(context, program_state, interfaceTransform, this.materials.interface.override({color: color(1, .05, .05, .9)}));
+
+        let textTransform = program_state.camera_transform.times(Mat4.translation(-1.5, 0, -2.99));
+
+        let strings = [
+            "Game Over!",
+            "Reload the page to try again :)"
+        ];
+        for (let i = 0; i < strings.length; i++) {
+            this.shapes.text.set_string(strings[i], context.context);
+            this.shapes.text.draw(context, program_state, textTransform.times(Mat4.scale(0.05, 0.05, 0.05)), this.materials.text_image);
+            textTransform.post_multiply(Mat4.translation(0, -0.2, 0));
         }
     }
 
@@ -311,7 +329,10 @@ class Main_Scene extends Scene {
             ////////////////////////////////////////////
             // ENTITIES
             ////////////////////////////////////////////
-
+            if (this.sammy.health === ""){
+                this.drawGameOver(context, program_state);
+                return;
+            }
             if (this.draw_hitboxes) {
                 this.sammy.draw(context, program_state, this.sammy.transform, this.materials.basic, "LINES");
             }
