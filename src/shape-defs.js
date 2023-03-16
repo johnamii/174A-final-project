@@ -72,9 +72,6 @@ export class Text_Interface extends defs.Square {
     constructor() {
         super();
 
-        this.material = new Material(new defs.Phong_Shader(),{
-            color: hex_color("#000000", 0.9),
-        })
     }
 }
 
@@ -145,6 +142,8 @@ class Entity extends Cube_Outline {
 
         this.box_dims = [1, 1, 1];
 
+        this.type = "Entity";
+
         this.speed_multiplier = speed_mult ?? 1;
         this.speed = this.speed_multiplier * meters_per_frame;
         this.thrust = vec3(0, 0, 0);
@@ -155,10 +154,9 @@ class Entity extends Cube_Outline {
             ;
 
         this.model = null;
-        this.material = new Material(new defs.Basic_Shader());
+        this.model_color = hex_color("ffffff");
     }
 
-    isCat(){ return "cube"; }
     isBoundary(){ return false; }
 
     transformModel(){
@@ -191,14 +189,10 @@ export class Starship extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
         this.health = 3;
+
+        this.type = "Starship";
         this.lastHit = null;
         this.model = new Shape_From_File("assets/starship.obj");
-        this.model_mat = new Material(new defs.Phong_Shader(), {color: hex_color("#ffffff")});
-        // this.model_mat = new Material(new defs.Textured_Phong(), {
-        //     texture: new Texture("assets/starship.png"),
-        //     color: hex_color("#ffffff"),
-        //     ambient:0.5, diffusivity: 0.1, specularity: 0.1
-        // });
     }
     changeHealth(t){
         if (this.lastHit == null || t > (1 + this.lastHit)){
@@ -244,22 +238,14 @@ export class PowellCat extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
 
+        this.type = "Cat";
+
         this.transform = this.transform
             .times(Mat4.scale(0.8, 0.8, 0.8));
         this.thrust[2] = -1;
 
-        this.material = this.material.override({color: hex_color('#222222')});
-
         this.model = new Shape_From_File("assets/garfield.obj");
-        
-        this.model_mat = new Material(new defs.Textured_Phong(), {
-            texture: new Texture("assets/garfield.png"),
-            color: hex_color("#000000"),
-            ambient:1, diffusivity: 0.1, specularity: 0.1
-        })
     }
-
-    isCat(){ return "cat"; }
 
     transformModel(){
         return this.transform.times(Mat4.rotation(Math.PI, 0, 1, 0));
@@ -304,6 +290,8 @@ export class Student extends Entity {
 
         this.box_dims = [1, 2.5, 1];
 
+        this.type = "Student";
+
         this.thrust[2] = -1 * speed_mult;
         this.transform = this.transform
             .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
@@ -312,10 +300,7 @@ export class Student extends Entity {
         this.max_z = -15;
     
         this.model = new Shape_From_File("assets/peg_person.obj");
-        this.model_mat = new Material(new defs.Phong_Shader(), {
-            color: color(Math.random(), Math.random(), Math.random(), 1),
-            specularity: 0.3
-        })
+        this.model_color = color(Math.random(), Math.random(), Math.random(), 1);
     }
 
     isBoundary(){ return true; }
@@ -342,6 +327,8 @@ export class PowerUp extends Entity {
     constructor(start_pos) {
         super(start_pos);
 
+        this.type = "PowerUp";
+
     }
     isCat(){return "powerUp";}
 }
@@ -350,34 +337,31 @@ export class Obstacle extends Entity {
     constructor(start_pos){
         super(start_pos);
         this.a = Math.floor(Math.random() * 3);
-        let mat_color;
+
+        this.type = "Obstacle";
 
         switch (this.a) {
             case(0): // sign
                 this.model = new Shape_From_File("assets/sign.obj");
-                mat_color = hex_color("#aaaa55");
+                this.model_color = hex_color("#aaaa55");
                 this.transform = this.transform
                     .times(Mat4.scale(2, 3, 2))
                     .times(Mat4.translation(0, 0.7, 0));
                 break;
             case(1):
                 this.model = new Shape_From_File("assets/barrier.obj");
-                mat_color = hex_color("#666666")
+                this.model_color = hex_color("#666666")
                 this.transform = this.transform
                     .times(Mat4.scale(4, 2, 3))
                     .times(Mat4.translation(0, 0.6, 0));
                 break;
             default:
                 this.model = new Shape_From_File("assets/crate.obj");
-                mat_color = hex_color("ddbb99")
+                this.model_color = hex_color("ddbb99")
                 this.transform = this.transform
                     .times(Mat4.scale(3, 3, 3))
                     .times(Mat4.translation(0, 0.7, 0));
         }
-
-        this.model_mat = new Material(new defs.Phong_Shader(), {
-            color: mat_color, ambient: 0.5
-        })
     }
 
     transformModel(){
