@@ -68,6 +68,16 @@ export class Skybox extends defs.Cube{
     }
 }
 
+export class Text_Interface extends defs.Square {
+    constructor() {
+        super();
+
+        this.material = new Material(new defs.Phong_Shader(),{
+            color: hex_color("#000000", 0.9),
+        })
+    }
+}
+
 ////////////////////////////////////////////////////////
 // BOUNDARY CLASS DEFINITIONS
 /////////////////////////////////////////////////////////
@@ -295,9 +305,11 @@ export class Student extends Entity {
     
         this.model = new Shape_From_File("assets/peg_person.obj");
         this.model_mat = new Material(new defs.Phong_Shader(), {
-            color: color(Math.random(), Math.random(), Math.random(), 1)
+            color: color(Math.random(), Math.random(), Math.random(), 1),
+            specularity: 0.3
         })
     }
+
     isBoundary(){ return true; }
 
     transformModel(){

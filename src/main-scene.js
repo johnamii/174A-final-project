@@ -1,7 +1,9 @@
 import {defs, tiny} from './provided/common.js';
 import { 
-    Skybox, Starship, Ground, BoundaryBox, Axis, PowellCat, PowerUp, getPosVector, Student, Wall
+    Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
+    PowellCat, PowerUp, getPosVector, Student, Wall
 } from "./shape-defs.js";
+import { Text_Line } from './provided/text-line.js'
 
 // Pull these names into this module's scope for convenience:
 const {
@@ -77,12 +79,13 @@ class Main_Scene extends Scene {
     constructor() {
         super();
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 25, 85), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.shapes = {
             axis: new Axis(),
             skybox: new Skybox(),
             //building: new BoundaryBox(),
+            text: new Text_Line(50)
         };
 
         // *** Materials
@@ -104,15 +107,21 @@ class Main_Scene extends Scene {
                 texture: new Texture("assets/sidewalk-texture-1.jpg"),
                 color: hex_color("#000000"),
                 ambient: 1, diffusivity: 0.1, specularity: 0.1
+            }),
+            text_image: new Material(new defs.Textured_Phong(), {
+                texture: new Texture("assets/text.png"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                //color: hex_color("ff0000")
             })
         }
 
         this.draw_hitboxes = true;
+        this.in_between_levels = true;
         this.difficulty = 0;
 
         this.worldDims = vec3(50, 25, 75);
 
-        const starshipSpawn = vec3(0, 2, 0);
+        const starshipSpawn = vec3(0, 2, 50);
         this.sammy = new Starship(starshipSpawn, 1);
 
         this.entities = loadEntities(difficulties[this.difficulty]);
@@ -122,12 +131,6 @@ class Main_Scene extends Scene {
             // invisible border boundary
             //new BoundaryBox(this.worldDims, vec3(0, 24.99, 0)),
   
-            // buildings
-            // new BoundaryBox(this.buildingDims, vec3(-bxdist, bheight, -bzdist)), // top left
-            // new BoundaryBox(this.buildingDims, vec3(bxdist, bheight, -bzdist)), // top right
-            // new BoundaryBox(this.buildingDims, vec3(bxdist, bheight, bzdist)), // bottom right
-            // new BoundaryBox(this.buildingDims, vec3(-bxdist, bheight, bzdist)), // bottom left
-
             // ROYCE HALL
             new BoundaryBox(this.buildingDims, vec3(-40, this.buildingDims[1], 0)),
             // POWELL LIBRARY
@@ -139,11 +142,15 @@ class Main_Scene extends Scene {
             new Ground(vec3(this.worldDims[0], 0.01, this.worldDims[2]), vec3(0, 0, 0), 4),
             // sidewalk
             new Ground(vec3(40, 1, 10), vec3(0, 0.02, 0), 32)
-        ]
+        ];
+
+        this.startScreen = new Text_Interface();
     }
 
     make_control_panel(){
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
+        this.key_triggered_button("Start", ["Enter"], () => { this.in_between_levels = false })
+        this.new_line();
         this.key_triggered_button("Explore Area", ["Control", "0"], () => this.attached = undefined);
         this.key_triggered_button("Starship", ["Control", "1"], () => this.attached = () => this.sammy.transform);
         this.new_line();
@@ -161,8 +168,11 @@ class Main_Scene extends Scene {
         let model_transform = Mat4.identity();
 
         // lights
-        const light_position = vec4(0, 5, 5, 1);
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+        program_state.lights = [
+            new Light(vec4(0, 10, 0, 1), color(1, 1, 1, 1), 1000),
+            new Light(vec4(-25, 10, 75, 1), color(1, 1, 1, 1), 1000),
+            new Light(vec4(25, 10, 75, 1), color(1, 1, 1, 1), 1000),
+        ];
 
         // sky
         let sky_transform = Mat4.identity().times(Mat4.scale(150, 150, 150));
@@ -176,6 +186,25 @@ class Main_Scene extends Scene {
             const mat = i === 0 ? this.materials.grass : this.materials.sidewalk;
 
             val.draw(context, program_state, val.transform, mat);
+        }
+    }
+
+    draw_text(context, program_state){
+        let interfaceTransform = program_state.camera_transform
+            .times(Mat4.translation(0, 0, -3))
+            .times(Mat4.scale(2, 1, 1));
+        this.startScreen.draw(context, program_state, interfaceTransform, this.startScreen.material)
+        
+        let textTransform = program_state.camera_transform.times(Mat4.translation(-1.5, 0, -2.99));
+        
+        let strings = [
+            "Welcome to Starship: The Last Delivery",
+            'Press "Enter" to Start'
+            ];
+        for (let i = 0; i < strings.length; i++) {
+            this.shapes.text.set_string(strings[i], context.context);
+            this.shapes.text.draw(context, program_state, textTransform.times(Mat4.scale(0.05, 0.05, 0.05)), this.materials.text_image);
+            textTransform.post_multiply(Mat4.translation(0, -0.2, 0));
         }
     }
 
@@ -194,7 +223,7 @@ class Main_Scene extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         this.draw_world(context, program_state);  
-
+        
         ////////////////////////////////////////////
         // BOUNDARIES
         ////////////////////////////////////////////
@@ -207,32 +236,38 @@ class Main_Scene extends Scene {
             boundary.draw(context, program_state, boundary.transform, mat);
         }
 
-        ////////////////////////////////////////////
-        // ENTITIES
-        ////////////////////////////////////////////
-
-        if (this.draw_hitboxes) {
-            this.sammy.draw(context, program_state, this.sammy.transform, this.sammy.material, "LINES");
+        if (this.in_between_levels) {
+            this.draw_text(context, program_state);
         }
-
-        this.sammy.model.draw(context, program_state, this.sammy.transformModel(), this.sammy.model_mat);
-        this.sammy.doMovement(dt);
-
-        for (let i = 0; i < this.entities.length; i++){
-
-            const entity = this.entities[i];
+        else {
+            ////////////////////////////////////////////
+            // ENTITIES
+            ////////////////////////////////////////////
 
             if (this.draw_hitboxes) {
-                entity.draw(context, program_state, entity.transform, entity.material, "LINES");
+                this.sammy.draw(context, program_state, this.sammy.transform, this.sammy.material, "LINES");
             }
 
-            if (entity.model !== null) {
-                entity.model.draw(context, program_state, entity.transformModel(), entity.model_mat);
+            this.sammy.model.draw(context, program_state, this.sammy.transformModel(), this.sammy.model_mat);
+            this.sammy.doMovement(dt);
+
+            for (let i = 0; i < this.entities.length; i++){
+
+                const entity = this.entities[i];
+
+                if (this.draw_hitboxes) {
+                    entity.draw(context, program_state, entity.transform, entity.material, "LINES");
+                }
+
+                if (entity.model !== null) {
+                    entity.model.draw(context, program_state, entity.transformModel(), entity.model_mat);
+                }
+
+                // move entities
+                let target = entity.isCat() ? getPosVector(this.sammy.transform) : null;
+                entity.doMovement(dt, target);
             }
 
-            // move entities
-            let target = entity.isCat() ? getPosVector(this.sammy.transform) : null;
-            entity.doMovement(dt, target);
         }
 
         ////////////////////////////////////////////
