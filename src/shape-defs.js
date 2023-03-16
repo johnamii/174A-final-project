@@ -188,15 +188,16 @@ class Entity extends Cube_Outline {
 export class Starship extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
-        this.health = 3;
-
+        this.health = "XXX";
         this.type = "Starship";
         this.lastHit = null;
         this.model = new Shape_From_File("assets/starship.obj");
     }
     changeHealth(t){
         if (this.lastHit == null || t > (1 + this.lastHit)){
-            this.health= this.health -1;
+            if(this.health !==""){
+                this.health = this.health.substring(0, this.health.length-1);
+            }
             console.log("just got hit!");
             this.lastHit = t;
         }
