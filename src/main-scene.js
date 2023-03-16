@@ -1,7 +1,7 @@
 import {defs, tiny} from './provided/common.js';
 import { 
     Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
-    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle
+    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, boxesIntersect
 } from "./shape-defs.js";
 import { Text_Line } from './provided/text-line.js'
 
@@ -11,6 +11,7 @@ const {
     Canvas_Widget, Code_Widget, Text_Widget
 } = tiny;
 
+var difficulty = 0;
 const difficulties = [
     {
         num_students: 5,
@@ -64,27 +65,28 @@ const difficulties = [
     },
 ];
 
-var vals = [];
+var entities = [];
 
 function loadEntities(difficultyMods) {
-    let entities = [];
+    for (let i = 0; i < entities.length; i++){
+        delete entities[i]
+    }
+    let arr = [];
 
     for (let i = 0; i < difficultyMods.num_cats; i++) {
-        entities.push(new PowellCat(vec3(-10 + i, 0, -10 + i), difficultyMods.cat_speed));
+        arr.push(new PowellCat(vec3(-10 + i, 0, -10 + i), difficultyMods.cat_speed));
     }
 
     for (let i = 0; i < difficultyMods.num_students; i++) {
-        entities.push(new Student(vec3(0, 0, 0), difficultyMods.student_speed));
+        arr.push(new Student(vec3(0, 0, 0), difficultyMods.student_speed));
     }
 
     for (let i = 0; i < difficultyMods.num_obstacles; i++) {
-        entities.push(new Obstacle(vec3(i*2, 0, i * 3)))
+        arr.push(new Obstacle(vec3(i*2, 0, i * 3)))
     }
 
-    return entities;
+    return arr;
 }
-
-// TODO: FIX OBJECTS MAXING OUT: MOVE new MATERIAL DEFS OUT OF OBJECT CLASSES
 
 class Main_Scene extends Scene {
     constructor() {
@@ -144,7 +146,7 @@ class Main_Scene extends Scene {
         const starshipSpawn = vec3(0, 2, 50);
         this.sammy = new Starship(starshipSpawn, 1);
 
-        this.entities = loadEntities(difficulties[this.difficulty]);
+        entities = loadEntities(difficulties[this.difficulty]);
 
         this.buildingDims = vec3(10, 7, 20);
         this.boundaries = [
@@ -169,20 +171,19 @@ class Main_Scene extends Scene {
 
     end_level(delivered){
         this.in_between_levels = true;
-        this.entities = [];
 
         if (delivered === true) {
-            //this.difficulty++;
+            this.difficulty++;
         }
         else {
             this.difficulty = 0;
         }
 
-        this.entities = loadEntities(difficulties[this.difficulty]);
+        entities = loadEntities(difficulties[this.difficulty]);
 
-        vals = vals.concat(this.entities);
-        console.log(this.entities.length)
-        console.log(vals.length)
+        //vals = vals.concat(entities);
+        console.log(entities.length)
+        //console.log(vals.length)
     }
 
     make_control_panel(){
@@ -290,6 +291,8 @@ class Main_Scene extends Scene {
             boundary.draw(context, program_state, boundary.transform, this.materials.brick);
         }
 
+
+        // DRAW TEXTBOX OR ENTITIES
         if (this.in_between_levels) {
             this.draw_text(context, program_state);
         }
@@ -308,9 +311,9 @@ class Main_Scene extends Scene {
             }));
             this.sammy.doMovement(dt);
 
-            for (let i = 0; i < this.entities.length; i++){
+            for (let i = 0; i < entities.length; i++){
 
-                const entity = this.entities[i];
+                const entity = entities[i];
                 const type = entity.type;
 
                 if (this.draw_hitboxes) {
@@ -349,6 +352,9 @@ class Main_Scene extends Scene {
 
             }
         }
+
+        // check collisions
+        this.sammy.checkEntityCollisions(entities);
 
         ////////////////////////////////////////////
         // CAMERA STUFF

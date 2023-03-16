@@ -9,6 +9,19 @@ export function getPosVector(matrix) {
     return vec3(matrix[0][3], matrix[1][3], matrix[2][3]);
 }
 
+export function boxesIntersect(box1, box2){
+
+    const b1Max = box1.max();
+    const b1Min = box1.min();
+    const b2Max = box2.max();
+    const b2Min = box2.min();
+    //console.log (b1Max(), box2.max());
+    if (b1Max.x < b2Min.x || b1Min.x > b2Max.x) return false;
+    if (b1Max.y < b2Min.y || b1Min.y > b2Max.y) return false;
+    if (b1Max.z < b2Min.z || b1Min.z > b2Max.z) return false;
+    return true;
+}
+
 const meters_per_frame = 10;
 
 export class Axis extends Shape {
@@ -157,14 +170,41 @@ class Entity extends Cube_Outline {
         this.model_color = hex_color("ffffff");
     }
 
+    max(){
+        let pos = getPosVector(this.transform);
+
+        let maxX = pos[0] + (this.box_dims[0]);
+        let maxY = pos[1] + (this.box_dims[1]);
+        let maxZ = pos[2] + (this.box_dims[2]);
+
+        return {x: maxX, y: maxY, z: maxZ}
+    }
+
+    min(){
+        let pos = getPosVector(this.transform);
+
+        let minX = pos[0] - (this.box_dims[0]);
+        let minY = pos[1] - (this.box_dims[1]);
+        let minZ = pos[2] - (this.box_dims[2]);
+
+        return {x: minX, y: minY, z: minZ}
+    }
+
     isBoundary(){ return false; }
 
     transformModel(){
         return this.transform;
     }
 
-    checkCollisions(entities){
-
+    checkEntityCollisions(entities){
+         // check collisions for starship
+         for (let i = 0; i < entities.length; i++) {
+            if (boxesIntersect(this, entities[i])) {
+                console.log(this.type + " collided with " + entities[i].type)
+                this.onCollision();
+                entities[i].onCollision();
+            }
+        }
     }
 
     onCollision(){
@@ -206,7 +246,6 @@ export class Starship extends Entity {
     transformModel(){
         return this.transform.times(Mat4.translation(0.3, 0, -0.2)).times(Mat4.scale(1.1, 1.1, 1.1))
     }
-    isCat(){return "starship";}
     doMovement(dt){
         super.doMovement(dt);
 
@@ -241,8 +280,10 @@ export class PowellCat extends Entity {
 
         this.type = "Cat";
 
+        this.box_dims = [0.8, 0.8, 0.8];
+
         this.transform = this.transform
-            .times(Mat4.scale(0.8, 0.8, 0.8));
+            .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]));
         this.thrust[2] = -1;
 
         this.model = new Shape_From_File("assets/garfield.obj");
@@ -305,7 +346,6 @@ export class Student extends Entity {
     }
 
     isBoundary(){ return true; }
-    isCat(){return "student";}
     transformModel(){
         return this.transform
             .times(Mat4.scale(1.3, 0.6, 1.3))
@@ -331,7 +371,6 @@ export class PowerUp extends Entity {
         this.type = "PowerUp";
 
     }
-    isCat(){return "powerUp";}
 }
 
 export class Obstacle extends Entity {
@@ -345,24 +384,33 @@ export class Obstacle extends Entity {
             case(0): // sign
                 this.model = new Shape_From_File("assets/sign.obj");
                 this.model_color = hex_color("#aaaa55");
+
+                this.box_dims = [2, 3, 2];
+
                 this.transform = this.transform
-                    .times(Mat4.scale(2, 3, 2))
                     .times(Mat4.translation(0, 0.7, 0));
                 break;
             case(1):
                 this.model = new Shape_From_File("assets/barrier.obj");
-                this.model_color = hex_color("#666666")
+                this.model_color = hex_color("#666666");
+
+                this.box_dims = [4, 2, 3];
+
                 this.transform = this.transform
-                    .times(Mat4.scale(4, 2, 3))
                     .times(Mat4.translation(0, 0.6, 0));
+
                 break;
             default:
                 this.model = new Shape_From_File("assets/crate.obj");
-                this.model_color = hex_color("ddbb99")
+                this.model_color = hex_color("ddbb99");
+
+                this.box_dims = [3, 3, 3];
+
                 this.transform = this.transform
-                    .times(Mat4.scale(3, 3, 3))
                     .times(Mat4.translation(0, 0.7, 0));
         }
+
+        this.transform = this.transform.times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]));
     }
 
     transformModel(){
@@ -378,5 +426,4 @@ export class Obstacle extends Entity {
     }
 
     doMovement() { return; }
-    isCat(){return "obstacle";}
 }
