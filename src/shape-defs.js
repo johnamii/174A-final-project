@@ -284,12 +284,12 @@ export class Student extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
 
-        this.box_dims = [0.5, 1.8, 0.5];
+        this.box_dims = [1, 2.5, 1];
 
         this.thrust[2] = -1 * speed_mult;
         this.transform = this.transform
             .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
-            .times(Mat4.translation(0, 0.5, 0));
+            .times(Mat4.translation(0, 0.65, 0));
 
         this.max_z = -15;
     
@@ -302,8 +302,8 @@ export class Student extends Entity {
 
     transformModel(){
         return this.transform
-            .times(Mat4.scale(1.3, 0.5, 1.3))
-            .times(Mat4.translation(0, 0.2, 0))
+            .times(Mat4.scale(1.3, 0.6, 1.3))
+            .times(Mat4.translation(0, 0.4, 0))
             
     }
 
