@@ -3,6 +3,7 @@ import {
     Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
     PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall
 } from "./shape-defs.js";
+
 import { Text_Line } from './provided/text-line.js'
 
 // Pull these names into this module's scope for convenience:
@@ -11,6 +12,7 @@ const {
     Canvas_Widget, Code_Widget, Text_Widget
 } = tiny;
 
+var difficulty = 0;
 const difficulties = [
     {
         num_students: 5,
@@ -64,26 +66,27 @@ const difficulties = [
     },
 ];
 
-var vals = [];
+var entities = [];
 
 function loadEntities(difficultyMods) {
-    let entities = [];
+    for (let i = 0; i < entities.length; i++){
+        delete entities[i]
+    }
+    let arr = [];
 
     for (let i = 0; i < difficultyMods.num_cats; i++) {
-        entities.push(new PowellCat(vec3(-10 + i, 0, -10 + i), difficultyMods.cat_speed));
+        arr.push(new PowellCat(vec3(-10 + i, 0, -10 + i), difficultyMods.cat_speed));
     }
 
     for (let i = 0; i < difficultyMods.num_students; i++) {
-        entities.push(new Student(vec3(0, 0, 0), difficultyMods.student_speed));
+        arr.push(new Student(vec3(0, 0, 0), difficultyMods.student_speed));
     }
 
     for (let i = 0; i < difficultyMods.num_obstacles; i++) {
-        entities.push(new Obstacle(vec3(i*2, 0, i * 3)))
+        arr.push(new Obstacle(vec3(i*2, 0, i * 3)))
     }
     return entities;
 }
-
-// TODO: FIX OBJECTS MAXING OUT: MOVE new MATERIAL DEFS OUT OF OBJECT CLASSES
 
 class Main_Scene extends Scene {
     constructor() {
@@ -148,7 +151,7 @@ class Main_Scene extends Scene {
         const starshipSpawn = vec3(0, 2, 50);
         this.sammy = new Starship(starshipSpawn, 1);
 
-        this.entities = loadEntities(difficulties[this.difficulty]);
+        entities = loadEntities(difficulties[this.difficulty]);
 
         this.buildingDims = vec3(10, 7, 20);
         this.boundaries = [
@@ -174,20 +177,19 @@ class Main_Scene extends Scene {
 
     end_level(delivered){
         this.in_between_levels = true;
-        this.entities = [];
 
         if (delivered === true) {
-            //this.difficulty++;
+            this.difficulty++;
         }
         else {
             this.difficulty = 0;
         }
 
-        this.entities = loadEntities(difficulties[this.difficulty]);
+        entities = loadEntities(difficulties[this.difficulty]);
 
-        vals = vals.concat(this.entities);
-        console.log(this.entities.length)
-        console.log(vals.length)
+        //vals = vals.concat(entities);
+        console.log(entities.length)
+        //console.log(vals.length)
     }
 
     make_control_panel(){
@@ -250,6 +252,24 @@ class Main_Scene extends Scene {
             textTransform.post_multiply(Mat4.translation(0, -0.2, 0));
         }
     }
+    drawHealthBar(context, program_state, hearts){
+        let interfaceTransform = program_state.camera_transform
+            .times(Mat4.translation(1.2, -1, -3))
+            .times(Mat4.scale(.7, .12, .5));
+        this.startScreen.draw(context, program_state, interfaceTransform, this.materials.interface)
+
+        let textTransform = program_state.camera_transform.times(Mat4.translation(.75, -1, -2.99));
+        let strings = [
+            "health: " + hearts
+        ];
+        for (let i = 0; i < strings.length; i++) {
+            this.shapes.text.set_string(strings[i], context.context);
+            this.shapes.text.draw(context, program_state, textTransform.times(Mat4.scale(.05, .05, .05)), this.materials.text_image);
+            textTransform.post_multiply(Mat4.translation(0, 0, 0));
+            console.log("uhh");
+        }
+    }
+
 
     display(context, program_state) { // Called once per frame of animation.
 
@@ -281,6 +301,8 @@ class Main_Scene extends Scene {
             }
         }
 
+
+        // DRAW TEXTBOX OR ENTITIES
         if (this.in_between_levels) {
             this.draw_text(context, program_state);
         }
@@ -292,15 +314,16 @@ class Main_Scene extends Scene {
             if (this.draw_hitboxes) {
                 this.sammy.draw(context, program_state, this.sammy.transform, this.materials.basic, "LINES");
             }
-
+            let hearts = this.sammy.health;
+            this.drawHealthBar(context, program_state, hearts);
             this.sammy.model.draw(context, program_state, this.sammy.transformModel(), this.materials.phong.override({
                 color: this.sammy.model_color
             }));
             this.sammy.doMovement(dt);
 
-            for (let i = 0; i < this.entities.length; i++){
+            for (let i = 0; i < entities.length; i++){
 
-                const entity = this.entities[i];
+                const entity = entities[i];
                 const type = entity.type;
 
                 if (this.draw_hitboxes) {
@@ -343,6 +366,9 @@ class Main_Scene extends Scene {
 
             }
         }
+
+        // check collisions
+        this.sammy.checkEntityCollisions(entities);
 
         ////////////////////////////////////////////
         // CAMERA STUFF
