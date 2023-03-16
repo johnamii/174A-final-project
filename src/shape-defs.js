@@ -450,3 +450,26 @@ export class RoyceHall extends Entity {
 
     doMovement() { return; }
 }
+
+export class PowellLib extends Entity {
+    constructor(start_pos){
+        super(start_pos);
+
+        this.type = "Powell Library";
+
+        this.transform = this.transform
+            .times(Mat4.rotation(Math.PI, 0, 1, 0))
+            .times(Mat4.scale(25, 25, 25))
+            .times(Mat4.translation(0, 0.9, -0.4));
+            //.times(Mat4.rotation(Math.PI/2, 0, 1, 0));
+
+        this.model = new Shape_From_File("assets/powell_library.obj");
+        // this.model_mat = new Material(new defs.Textured_Phong(), {
+        //     texture: new Texture("assets/royce_hall.png"),
+        //     color: hex_color("#ffffff"),
+        //     ambient:0.5, diffusivity: 0.1, specularity: 0.1
+        // });
+    }
+
+    doMovement() { return; }
+}
