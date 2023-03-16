@@ -1,7 +1,7 @@
 import {defs, tiny} from './provided/common.js';
-import { 
+import {
     Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
-    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle
+    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall
 } from "./shape-defs.js";
 import { Text_Line } from './provided/text-line.js'
 
@@ -80,7 +80,6 @@ function loadEntities(difficultyMods) {
     for (let i = 0; i < difficultyMods.num_obstacles; i++) {
         entities.push(new Obstacle(vec3(i*2, 0, i * 3)))
     }
-
     return entities;
 }
 
@@ -131,6 +130,11 @@ class Main_Scene extends Scene {
                 texture: new Texture("assets/garfield.png"),
                 color: hex_color("#000000"),
                 ambient:1, diffusivity: 0.1, specularity: 0.1
+            }),
+            royce_hall: new Material(new defs.Textured_Phong(), {
+                //texture: new Texture("assets/garfield.png"),
+                color: hex_color("#b06b2a"),
+                ambient:1, diffusivity: 0.1, specularity: 0.1
             })
 
         }
@@ -152,9 +156,10 @@ class Main_Scene extends Scene {
             //new BoundaryBox(this.worldDims, vec3(0, 24.99, 0)),
   
             // ROYCE HALL
-            new BoundaryBox(this.buildingDims, vec3(-40, this.buildingDims[1], 0)),
+            //new BoundaryBox(this.buildingDims, vec3(-40, this.buildingDims[1], 0)),
+            new RoyceHall(vec3(-40, this.buildingDims[1], 0)),
             // POWELL LIBRARY
-            new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
+            //new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
         ];
 
         this.world = [
@@ -269,7 +274,11 @@ class Main_Scene extends Scene {
         for (let i = 0; i < this.boundaries.length; i++) {
             const boundary = this.boundaries[i];
 
-            boundary.draw(context, program_state, boundary.transform, this.materials.brick);
+            boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
+
+            if(boundary.model !== null){
+                boundary.model.draw(context, program_state, boundary.transformModel(), this.materials.brick);
+            }
         }
 
         if (this.in_between_levels) {
@@ -306,6 +315,10 @@ class Main_Scene extends Scene {
                     switch(type){
                         case("Cat"):
                             model_mat = this.materials.cat;
+                            break;
+                        case("Royce Hall"):
+                            model_mat = this.materials.brick;
+                           // model_mat = this.materials.royce_hall;
                             break;
                     }
 
