@@ -86,6 +86,7 @@ function loadEntities(difficultyMods) {
         arr.push(new Obstacle(vec3(i*2, 0, i * 3)))
     }
     return arr;
+
 }
 
 class Main_Scene extends Scene {
