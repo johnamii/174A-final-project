@@ -342,7 +342,7 @@ class Main_Scene extends Scene {
                 color: this.sammy.model_color
             }));
             this.sammy.doMovement(dt);
-
+            
             for (let i = 0; i < entities.length; i++){
 
                 const entity = entities[i];

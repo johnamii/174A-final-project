@@ -216,12 +216,19 @@ class Entity extends Cube_Outline {
     }
 
     doMovement(dt){
-
         let speed = dt * this.speed;
         let rot = dt * this.turn * 4;
-        
+        const x = [this.transform[0][3]];
+        const y = [this.transform[2][3]];
         this.transform.post_multiply(Mat4.rotation(rot, 0, 1, 0));
         this.transform.post_multiply(Mat4.translation(...this.thrust.times(speed)));
+        let newX = this.transform[0][3];
+        let newY = this.transform[2][3];
+
+        if(newX > 49 || newX < -49 || newY > 74 || newY < -74){
+            this.transform[0][3] = x;
+            this.transform[2][3] = y;
+        }
     }
 }
 
