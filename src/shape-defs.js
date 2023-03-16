@@ -196,18 +196,22 @@ class Entity extends Cube_Outline {
         return this.transform;
     }
 
-    checkEntityCollisions(entities){
+    checkEntityCollisions(entities, t){
          // check collisions for starship
          for (let i = 0; i < entities.length; i++) {
             if (boxesIntersect(this, entities[i])) {
-                console.log(this.type + " collided with " + entities[i].type)
-                this.onCollision();
-                entities[i].onCollision();
+
+                const type = entities[i].type
+                console.log(this.type + " collided with " + type);
+
+                this.onCollision(type, t);
+
+                entities[i].onCollision(this.type);
             }
         }
     }
 
-    onCollision(){
+    onCollision(colliderType){
 
     }
 
@@ -240,19 +244,26 @@ export class Starship extends Entity {
         this.lastHit = null;
         this.model = new Shape_From_File("assets/starship.obj");
     }
+
+    onCollision(colliderType, t){
+        this.changeHealth(t)
+    }
+
     changeHealth(t){
         if (this.lastHit == null || t > (1 + this.lastHit)){
             if(this.health !==""){
                 this.health = this.health.substring(0, this.health.length-1);
             }
-            console.log("just got hit!");
+            console.log("You lost some health!");
             this.lastHit = t;
         }
 
     }
+
     transformModel(){
         return this.transform.times(Mat4.translation(0.3, 0, -0.2)).times(Mat4.scale(1.1, 1.1, 1.1))
     }
+
     doMovement(dt){
         super.doMovement(dt);
 

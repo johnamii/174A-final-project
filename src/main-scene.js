@@ -374,23 +374,14 @@ class Main_Scene extends Scene {
                 let target = null;
                 if(type === "Cat") {
                     target = getPosVector(this.sammy.transform);
-                    //console.log(this.sammy.transform+"\n"+entity.transformModel())
-                    if(((Math.pow((this.sammy.transform[0][3]-entity.transformModel()[0][3]),2)) + (Math.pow((this.sammy.transform[2][3]-entity.transformModel()[2][3]),2))) < 4){
-                        this.sammy.changeHealth(t);
-                    }
-                    else {
-                        entity.doMovement(dt, target);
-                    }
                 }
-                else{
-                    entity.doMovement(dt, target);
-                }
+                entity.doMovement(dt, target);
 
             }
         }
 
         // check collisions
-        this.sammy.checkEntityCollisions(entities.concat(this.boundaries));
+        this.sammy.checkEntityCollisions(entities.concat(this.boundaries), t);
 
         // for (let i = 0; i < entities.length; i++) {
         //     entities[i].checkEntityCollisions(this.boundaries);
