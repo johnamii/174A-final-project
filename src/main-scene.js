@@ -160,15 +160,11 @@ class Main_Scene extends Scene {
         entities = loadEntities(difficulties[this.difficulty]);
 
         this.buildingDims = vec3(10, 7, 20);
-        this.boundaries = [
-            // invisible border boundary
-            //new BoundaryBox(this.worldDims, vec3(0, 24.99, 0)),
-  
+        this.boundaries = [  
             // ROYCE HALL
-            //new BoundaryBox(this.buildingDims, vec3(-40, this.buildingDims[1], 0)),
             new RoyceHall(vec3(-40, this.buildingDims[1], 0)),
+
             // POWELL LIBRARY
-            //new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
             new PowellLib(vec3(40, this.buildingDims[1], 0)),
         ];
 
@@ -318,7 +314,9 @@ class Main_Scene extends Scene {
         for (let i = 0; i < this.boundaries.length; i++) {
             const boundary = this.boundaries[i];
 
-            boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
+            if (this.draw_hitboxes){
+                boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
+            }
 
             if(boundary.model !== null){
                 boundary.model.draw(context, program_state, boundary.transformModel(), this.materials.brick);

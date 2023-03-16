@@ -201,7 +201,8 @@ class Entity extends Cube_Outline {
          for (let i = 0; i < entities.length; i++) {
             if (boxesIntersect(this, entities[i])) {
 
-                const type = entities[i].type
+                const type = entities[i].type;
+                
                 console.log(this.type + " collided with " + type);
 
                 this.onCollision(type, t);
@@ -246,7 +247,9 @@ export class Starship extends Entity {
     }
 
     onCollision(colliderType, t){
-        this.changeHealth(t)
+        if (colliderType === "Cat"){
+            this.changeHealth(t);
+        }
     }
 
     changeHealth(t){
@@ -480,18 +483,20 @@ export class PowellLib extends Entity {
 
         this.type = "Powell Library";
 
+        this.box_dims = [10, 25, 50];
+
         this.transform = this.transform
-            .times(Mat4.rotation(Math.PI, 0, 1, 0))
-            .times(Mat4.scale(25, 25, 25))
-            .times(Mat4.translation(0, 0.9, -0.4));
-            //.times(Mat4.rotation(Math.PI/2, 0, 1, 0));
+            .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
+            .times(Mat4.translation(0, 0.69, 0));
 
         this.model = new Shape_From_File("assets/powell_library.obj");
-        // this.model_mat = new Material(new defs.Textured_Phong(), {
-        //     texture: new Texture("assets/royce_hall.png"),
-        //     color: hex_color("#ffffff"),
-        //     ambient:0.5, diffusivity: 0.1, specularity: 0.1
-        // });
+    }
+
+    transformModel(){
+        return this.transform
+            .times(Mat4.rotation(Math.PI, 0, 1, 0))
+            .times(Mat4.scale(1.9, 0.8, .4))
+            .times(Mat4.translation(0.41, -0.05, 0));
     }
 
     doMovement() { return; }
