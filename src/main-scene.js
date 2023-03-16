@@ -1,6 +1,6 @@
 import {defs, tiny} from './provided/common.js';
 import { 
-    Skybox, Starship, Ground, BoundaryBox, Axis, PowellCat, PowerUp, getPosVector, Student
+    Skybox, Starship, Ground, BoundaryBox, Axis, PowellCat, PowerUp, getPosVector, Student, Wall
 } from "./shape-defs.js";
 
 // Pull these names into this module's scope for convenience:
@@ -9,6 +9,70 @@ const {
     Canvas_Widget, Code_Widget, Text_Widget
 } = tiny;
 
+const difficulties = [
+    {
+        num_students: 5,
+        student_speed: 0.5,
+        num_cats: 1,
+        cat_speed: 0.5,
+        min_cat_spawn_distance: 30,
+        num_power_ups: 5,
+        max_target_spawn_distance: 30
+    },
+    {
+        num_students: 10,
+        student_speed: 0.6,
+        num_cats: 1,
+        cat_speed: 0.75,
+        min_cat_spawn_distance: 25,
+        num_power_ups: 4,
+        max_target_spawn_distance: 35
+    },
+    {
+        num_students: 15,
+        student_speed: 0.7,
+        num_cats: 2,
+        cat_speed: 0.75,
+        min_cat_spawn_distance: 20,
+        num_power_ups: 3,
+        max_target_spawn_distance: 40
+    },
+    {
+        num_students: 20,
+        student_speed: 0.8,
+        num_cats: 2,
+        cat_speed: 1,
+        min_cat_spawn_distance: 15,
+        num_power_ups: 2,
+        max_target_spawn_distance: 45
+    },
+    {
+        num_students: 25,
+        student_speed: 0.9,
+        num_cats: 3,
+        cat_speed: 1,
+        min_cat_spawn_distance: 10,
+        num_power_ups: 1,
+        max_target_spawn_distance: 50
+    },
+];
+
+function loadEntities(difficultyMods) {
+    let entities = [];
+
+    for (let i = 0; i < difficultyMods.num_cats; i++) {
+        entities.push(new PowellCat(vec3(-10, 0, -10), difficultyMods.cat_speed));
+    }
+
+    for (let i = 0; i < difficultyMods.num_students; i++) {
+        entities.push(new Student(vec3(0, 0, 0), difficultyMods.student_speed));
+    }
+
+    
+
+    return entities;
+}
+
 class Main_Scene extends Scene {
     constructor() {
         super();
@@ -16,7 +80,6 @@ class Main_Scene extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.shapes = {
-            grass: new Ground(),
             axis: new Axis(),
             skybox: new Skybox(),
             //building: new BoundaryBox(),
@@ -45,29 +108,38 @@ class Main_Scene extends Scene {
         }
 
         this.draw_hitboxes = true;
-        this.worldDims = [30, 0, 60];
-        this.buildingDims = [];
+        this.difficulty = 0;
 
-        this.sammy = new Starship(vec3(0, 2, 0), 1);
+        this.worldDims = vec3(50, 25, 75);
 
-        this.entities = [
-            new PowellCat(vec3(-10, 1, 0), 0.5),
-            new Student(vec3(-10, 0, 5), 0.5)
-        ];
+        const starshipSpawn = vec3(0, 2, 0);
+        this.sammy = new Starship(starshipSpawn, 1);
 
-        let bxdist = 25;    //how close the buildings are to the edge (left right on map)
-        let bheight = 4;    //height of building
-        let bzdist = 30;    //how far buildings are from center (up down on map)
+        this.entities = loadEntities(difficulties[this.difficulty]);
 
+        this.buildingDims = vec3(10, 7, 20);
         this.boundaries = [
             // invisible border boundary
-            new BoundaryBox(vec3(30, 25, 60), vec3(0, 24.99, 0)),
+            //new BoundaryBox(this.worldDims, vec3(0, 24.99, 0)),
+  
             // buildings
-            new BoundaryBox(vec3(4, bheight, 20), vec3(-bxdist, bheight, -bzdist)), // top left
-            new BoundaryBox(vec3(4, bheight, 20), vec3(bxdist, bheight, -bzdist)), // top right
-            new BoundaryBox(vec3(4, bheight, 20), vec3(bxdist, bheight, bzdist)), // bottom right
-            new BoundaryBox(vec3(4, bheight, 20), vec3(-bxdist, bheight, bzdist)), // bottom left
+            // new BoundaryBox(this.buildingDims, vec3(-bxdist, bheight, -bzdist)), // top left
+            // new BoundaryBox(this.buildingDims, vec3(bxdist, bheight, -bzdist)), // top right
+            // new BoundaryBox(this.buildingDims, vec3(bxdist, bheight, bzdist)), // bottom right
+            // new BoundaryBox(this.buildingDims, vec3(-bxdist, bheight, bzdist)), // bottom left
+
+            // ROYCE HALL
+            new BoundaryBox(this.buildingDims, vec3(-40, this.buildingDims[1], 0)),
+            // POWELL LIBRARY
+            new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
         ];
+
+        this.world = [
+            // grass on ground
+            new Ground(vec3(this.worldDims[0], 0.01, this.worldDims[2]), vec3(0, 0, 0), 4),
+            // sidewalk
+            new Ground(vec3(40, 1, 10), vec3(0, 0.02, 0), 32)
+        ]
     }
 
     make_control_panel(){
@@ -81,7 +153,7 @@ class Main_Scene extends Scene {
         this.key_triggered_button("Starship Turn Left", ["ArrowLeft"], () => this.sammy.turn = 1, undefined, () => this.sammy.turn = 0);
         this.key_triggered_button("Starship Turn Right", ["ArrowRight"], () => this.sammy.turn = -1, undefined, () => this.sammy.turn = 0);
         this.new_line();
-        this.key_triggered_button("Starship Jump", ["Shift"], () => {if (this.sammy.transform[1][3] - this.sammy.dims[1] < 0.1) {this.sammy.thrust[1] = 6}});
+        this.key_triggered_button("Starship Jump", ["Shift"], () => {if (this.sammy.transform[1][3] - this.sammy.box_dims[1] < 0.1) {this.sammy.thrust[1] = 6}});
         this.key_triggered_button("Show Hitboxes", ["o"], () => this.draw_hitboxes = !this.draw_hitboxes);
     } 
 
@@ -93,23 +165,18 @@ class Main_Scene extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
         // sky
-        let sky_transform = Mat4.identity().times(Mat4.scale(200, 200, 200));
+        let sky_transform = Mat4.identity().times(Mat4.scale(150, 150, 150));
         this.shapes.skybox.draw(context, program_state, sky_transform, this.materials.white);
 
         this.shapes.axis.draw(context, program_state, model_transform, this.materials.white, 'LINES');
 
-        // ground
-        let grass_transform = Mat4.identity()
-            .times(Mat4.scale(30, 0.01, 60))
-            .times(Mat4.rotation(Math.PI/2, 1, 0, 0));
-        this.shapes.grass.draw(context, program_state, grass_transform, this.materials.grass);
+        // world
+        for (let i = 0; i < this.world.length; i++) {
+            const val = this.world[i];
+            const mat = i === 0 ? this.materials.grass : this.materials.sidewalk;
 
-        let sidewalk_transform = Mat4.identity()
-            .times(Mat4.translation(-10, 0.05, 0))
-            .times(Mat4.scale(2, 1, 20))
-            .times(Mat4.rotation(Math.PI/2, 1, 0, 0))
-
-        this.shapes.grass.draw(context, program_state, sidewalk_transform, this.materials.sidewalk);
+            val.draw(context, program_state, val.transform, mat);
+        }
     }
 
     display(context, program_state) { // Called once per frame of animation.
@@ -135,7 +202,7 @@ class Main_Scene extends Scene {
         for (let i = 0; i < this.boundaries.length; i++) {
             const boundary = this.boundaries[i];
 
-            let mat = i === 0 ? this.materials.test.override({color: hex_color("ffffff", 0)}) : this.materials.brick;
+            let mat = i === -1 ? this.materials.test.override({color: hex_color("ffffff", 0)}) : this.materials.brick;
 
             boundary.draw(context, program_state, boundary.transform, mat);
         }

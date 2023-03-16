@@ -73,30 +73,31 @@ export class Skybox extends defs.Cube{
 /////////////////////////////////////////////////////////
 
 class Boundary extends defs.Square {
-    constructor(){
+    constructor(dimensions, position, tex_per_face){
         super();
 
-        
+        this.arrays.texture_coord = Vector.cast(
+            [0, 0], [tex_per_face, 0], [0, tex_per_face], [tex_per_face, tex_per_face]
+        );
+        this.transform = Mat4.identity()
+            .times(Mat4.scale(dimensions[0], dimensions[1], dimensions[2]))
+            .times(Mat4.translation(position[0], position[1], position[2]));
     }
 }
 
 export class Ground extends Boundary {
-    constructor(){
-        super();
+    constructor(dimensions, position, tex_per_face){
+        super(dimensions, position, tex_per_face);
 
-        this.arrays.texture_coord = Vector.cast(
-            [0, 0], [4, 0], [0, 4], [4, 4]
-        );
+        this.transform = this.transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0));
     }
 }
 
 export class Wall extends Boundary {
-    constructor(){
-        super();
+    constructor(dimensions, position, tex_per_face){
+        super(dimensions, position, tex_per_face);
 
-        this.arrays.texture_coord = Vector.cast(
-            [0, 0], [4, 0], [0, 4], [4, 4]
-        );
+        
     }
 }
 
@@ -118,7 +119,7 @@ export class BoundaryBox extends Shape {
                         .times(Mat4.translation(0, 0, 1));
                     // Calling this function of a Square (or any Shape) copies it into the specified
                     // Shape (this one) at the specified matrix offset (square_transform):
-                    Wall.insert_transformed_copy_into(this, [], square_transform);
+                    Wall.insert_transformed_copy_into(this, [vec3(1, 1, 1), vec3(0, 0, 0), 4], square_transform);
                     this.boundary_transforms.push(square_transform);
                 }
     }
@@ -132,13 +133,14 @@ class Entity extends Cube_Outline {
     constructor(start_pos, speed_mult){
         super();
 
+        this.box_dims = [1, 1, 1];
+
         this.speed_multiplier = speed_mult ?? 1;
         this.speed = this.speed_multiplier * meters_per_frame;
         this.thrust = vec3(0, 0, 0);
         this.turn = 0;
-        this.dims = [1, 1, 1];
         this.transform = Mat4.identity()
-            .times(Mat4.translation(start_pos[0], start_pos[1], start_pos[2]))
+            .times(Mat4.translation(start_pos[0], start_pos[1]+1, start_pos[2]))
             //.times(Mat4.scale(this.dims[0], this.dims[1], this.dims[2]))
             ;
 
@@ -168,29 +170,9 @@ class Entity extends Cube_Outline {
     doMovement(dt){
 
         let speed = dt * this.speed;
-        if (this.thrust[1] > 0) {
-            this.thrust[1] -= 0.05 * dt* (400);
-        }
-        else{
-            this.thrust[1] = 0;
-        }
-         // get y coordinate of center of starship, fall until hitting ground
-         let transformY = this.transform[1][3] - this.dims[1];
-
-        if (transformY > 0.2 ){
-             let fall = -0.2 * dt * 60;
-             let x = transformY+fall;
-             if(x>0) {
-                 this.transform = this.transform.times(Mat4.translation(0, fall, 0));
-             }
-             else{
-                 this.transform[1][3] = 1;
-             }
-         }
-        else{
-            this.transform[1][3] = 1;
-        }
-        this.transform.post_multiply(Mat4.rotation(dt*4 * this.turn, 0, 1, 0));
+        let rot = dt * this.turn * 4;
+        
+        this.transform.post_multiply(Mat4.rotation(rot, 0, 1, 0));
         this.transform.post_multiply(Mat4.translation(...this.thrust.times(speed)));
     }
 }
@@ -201,6 +183,11 @@ export class Starship extends Entity {
         
         this.model = new Shape_From_File("assets/starship.obj");
         this.model_mat = new Material(new defs.Phong_Shader(), {color: hex_color("#ffffff")});
+        // this.model_mat = new Material(new defs.Textured_Phong(), {
+        //     texture: new Texture("assets/starship.png"),
+        //     color: hex_color("#ffffff"),
+        //     ambient:0.5, diffusivity: 0.1, specularity: 0.1
+        // });
     }
 
     transformModel(){
@@ -209,6 +196,29 @@ export class Starship extends Entity {
 
     doMovement(dt){
         super.doMovement(dt);
+
+        if (this.thrust[1] > 0) {
+            this.thrust[1] -= 0.05 * dt* (400);
+        }
+        else{
+            this.thrust[1] = 0;
+        }
+         // get y coordinate of center of starship, fall until hitting ground
+        let transformY = this.transform[1][3] - this.box_dims[1];
+
+        if (transformY > 0.2 ){
+             let fall = -0.2 * dt * 60;
+             let x = transformY+fall;
+             if (x > 0) {
+                this.transform = this.transform.times(Mat4.translation(0, fall, 0));
+             }
+             else {
+                this.transform[1][3] = 1;
+             }
+         }
+        else{
+            this.transform[1][3] = 1;
+        }
     }
 }
 
@@ -273,16 +283,29 @@ export class Target extends Entity {
 export class Student extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
-        this.thrust[2] = 1 * speed_mult;
+
+        this.box_dims = [0.5, 1.8, 0.5];
+
+        this.thrust[2] = -1 * speed_mult;
         this.transform = this.transform
-            .times(Mat4.scale(0.5, 2, 0.5))
-            .times(Mat4.translation(0, 3, 0));
+            .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
+            .times(Mat4.translation(0, 0.5, 0));
 
         this.max_z = -15;
-        //this.model = new Shape_From_File("assets/garfield.obj");
-        this.material = this.material.override({color: color(Math.random(), Math.random(), Math.random(), 1)})
+    
+        this.model = new Shape_From_File("assets/peg_person.obj");
+        this.model_mat = new Material(new defs.Phong_Shader(), {
+            color: color(Math.random(), Math.random(), Math.random(), 1)
+        })
     }
     isBoundary(){ return true; }
+
+    transformModel(){
+        return this.transform
+            .times(Mat4.scale(1.3, 0.5, 1.3))
+            .times(Mat4.translation(0, 0.2, 0))
+            
+    }
 
     doMovement(dt){
         super.doMovement(dt);
