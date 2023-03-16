@@ -337,3 +337,52 @@ export class PowerUp extends Entity {
     }
 
 }
+
+export class Obstacle extends Entity {
+    constructor(start_pos){
+        super(start_pos);
+        this.a = Math.floor(Math.random() * 3);
+        let mat_color;
+
+        switch (this.a) {
+            case(0): // sign
+                this.model = new Shape_From_File("assets/sign.obj");
+                mat_color = hex_color("#aaaa55");
+                this.transform = this.transform
+                    .times(Mat4.scale(2, 3, 2))
+                    .times(Mat4.translation(0, 0.7, 0));
+                break;
+            case(1):
+                this.model = new Shape_From_File("assets/barrier.obj");
+                mat_color = hex_color("#666666")
+                this.transform = this.transform
+                    .times(Mat4.scale(4, 2, 3))
+                    .times(Mat4.translation(0, 0.6, 0));
+                break;
+            default:
+                this.model = new Shape_From_File("assets/crate.obj");
+                mat_color = hex_color("ddbb99")
+                this.transform = this.transform
+                    .times(Mat4.scale(3, 3, 3))
+                    .times(Mat4.translation(0, 0.7, 0));
+        }
+
+        this.model_mat = new Material(new defs.Phong_Shader(), {
+            color: mat_color, ambient: 0.5
+        })
+    }
+
+    transformModel(){
+        switch(this.a){
+            case(0): //sign
+                return this.transform.times(Mat4.scale(1, 2/3, 1)).times(Mat4.translation(0, 0.5, 0));
+            case(1): //barrier
+                return this.transform.times(Mat4.scale(3/4, 3/2, 1));
+            default: //crate
+                return this.transform.times(Mat4.scale(1.3, 1.3, 1.3)).times(Mat4.rotation(Math.PI/2, 0, 1, 0));
+            
+        }
+    }
+
+    doMovement() { return; }
+}

@@ -1,7 +1,7 @@
 import {defs, tiny} from './provided/common.js';
 import { 
     Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
-    PowellCat, PowerUp, getPosVector, Student, Wall
+    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle
 } from "./shape-defs.js";
 import { Text_Line } from './provided/text-line.js'
 
@@ -19,7 +19,8 @@ const difficulties = [
         cat_speed: 0.5,
         min_cat_spawn_distance: 30,
         num_power_ups: 5,
-        max_target_spawn_distance: 30
+        max_target_spawn_distance: 30,
+        num_obstacles: 2
     },
     {
         num_students: 10,
@@ -28,7 +29,8 @@ const difficulties = [
         cat_speed: 0.75,
         min_cat_spawn_distance: 25,
         num_power_ups: 4,
-        max_target_spawn_distance: 35
+        max_target_spawn_distance: 35,
+        num_obstacles: 4
     },
     {
         num_students: 15,
@@ -37,7 +39,8 @@ const difficulties = [
         cat_speed: 0.75,
         min_cat_spawn_distance: 20,
         num_power_ups: 3,
-        max_target_spawn_distance: 40
+        max_target_spawn_distance: 40,
+        num_obstacles: 6
     },
     {
         num_students: 20,
@@ -46,7 +49,8 @@ const difficulties = [
         cat_speed: 1,
         min_cat_spawn_distance: 15,
         num_power_ups: 2,
-        max_target_spawn_distance: 45
+        max_target_spawn_distance: 45,
+        num_obstacles: 8
     },
     {
         num_students: 25,
@@ -55,7 +59,8 @@ const difficulties = [
         cat_speed: 1,
         min_cat_spawn_distance: 10,
         num_power_ups: 1,
-        max_target_spawn_distance: 50
+        max_target_spawn_distance: 50,
+        num_obstacles: 10
     },
 ];
 
@@ -70,10 +75,14 @@ function loadEntities(difficultyMods) {
         entities.push(new Student(vec3(0, 0, 0), difficultyMods.student_speed));
     }
 
-    
+    for (let i = 0; i < difficultyMods.num_obstacles; i++) {
+        entities.push(new Obstacle(vec3(i*2, 0, i * 3)))
+    }
 
     return entities;
 }
+
+// TODO: FIX OBJECTS MAXING OUT: MOVE new MATERIAL DEFS OUT OF OBJECT CLASSES
 
 class Main_Scene extends Scene {
     constructor() {
@@ -149,7 +158,7 @@ class Main_Scene extends Scene {
 
     end_level(delivered){
         this.in_between_levels = true;
-        
+
         if (delivered === true) {
             this.difficulty++;
         }
