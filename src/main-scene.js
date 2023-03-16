@@ -64,6 +64,8 @@ const difficulties = [
     },
 ];
 
+var vals = [];
+
 function loadEntities(difficultyMods) {
     let entities = [];
 
@@ -99,9 +101,10 @@ class Main_Scene extends Scene {
 
         // *** Materials
         this.materials = {
-            test: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
-            white: new Material(new defs.Basic_Shader()),
+            basic: new Material(new defs.Basic_Shader()),
+            phong: new Material(new defs.Phong_Shader(), {
+                ambient: .5, diffusivity: .5, specularity: 0.5,
+            }),
             brick: new Material(new defs.Textured_Phong(), {
                 texture: new Texture("assets/royce-hall.jpg"),
                 color: hex_color("#b06b2a"),
@@ -120,8 +123,16 @@ class Main_Scene extends Scene {
             text_image: new Material(new defs.Textured_Phong(), {
                 texture: new Texture("assets/text.png"),
                 ambient: 1, diffusivity: 0, specularity: 0,
-                //color: hex_color("ff0000")
+            }),
+            interface: new Material(new defs.Phong_Shader(),{
+                color: hex_color("#000000", 0.9),
+            }),
+            cat: new Material(new defs.Textured_Phong(), {
+                texture: new Texture("assets/garfield.png"),
+                color: hex_color("#000000"),
+                ambient:1, diffusivity: 0.1, specularity: 0.1
             })
+
         }
 
         this.draw_hitboxes = true;
@@ -158,19 +169,23 @@ class Main_Scene extends Scene {
 
     end_level(delivered){
         this.in_between_levels = true;
+        this.entities = [];
 
         if (delivered === true) {
-            this.difficulty++;
+            //this.difficulty++;
         }
         else {
             this.difficulty = 0;
         }
 
         this.entities = loadEntities(difficulties[this.difficulty]);
+
+        vals = vals.concat(this.entities);
+        console.log(this.entities.length)
+        console.log(vals.length)
     }
 
     make_control_panel(){
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Start", ["Enter"], () => { this.in_between_levels = false });
         this.key_triggered_button("Temp raise level", ["m"], () => this.end_level(true))
         this.new_line();
@@ -199,9 +214,9 @@ class Main_Scene extends Scene {
 
         // sky
         let sky_transform = Mat4.identity().times(Mat4.scale(150, 150, 150));
-        this.shapes.skybox.draw(context, program_state, sky_transform, this.materials.white);
+        this.shapes.skybox.draw(context, program_state, sky_transform, this.materials.basic);
 
-        this.shapes.axis.draw(context, program_state, model_transform, this.materials.white, 'LINES');
+        //this.shapes.axis.draw(context, program_state, model_transform, this.materials.basic, 'LINES');
 
         // world
         for (let i = 0; i < this.world.length; i++) {
@@ -216,7 +231,7 @@ class Main_Scene extends Scene {
         let interfaceTransform = program_state.camera_transform
             .times(Mat4.translation(0, 0, -3))
             .times(Mat4.scale(2, 1, 1));
-        this.startScreen.draw(context, program_state, interfaceTransform, this.startScreen.material)
+        this.startScreen.draw(context, program_state, interfaceTransform, this.materials.interface)
         
         let textTransform = program_state.camera_transform.times(Mat4.translation(-1.5, 0, -2.99));
         
@@ -254,9 +269,7 @@ class Main_Scene extends Scene {
         for (let i = 0; i < this.boundaries.length; i++) {
             const boundary = this.boundaries[i];
 
-            let mat = i === -1 ? this.materials.test.override({color: hex_color("ffffff", 0)}) : this.materials.brick;
-
-            boundary.draw(context, program_state, boundary.transform, mat);
+            boundary.draw(context, program_state, boundary.transform, this.materials.brick);
         }
 
         if (this.in_between_levels) {
@@ -268,26 +281,40 @@ class Main_Scene extends Scene {
             ////////////////////////////////////////////
 
             if (this.draw_hitboxes) {
-                this.sammy.draw(context, program_state, this.sammy.transform, this.sammy.material, "LINES");
+                this.sammy.draw(context, program_state, this.sammy.transform, this.materials.basic, "LINES");
             }
 
-
+            this.sammy.model.draw(context, program_state, this.sammy.transformModel(), this.materials.phong.override({
+                color: this.sammy.model_color
+            }));
+            this.sammy.doMovement(dt);
 
             for (let i = 0; i < this.entities.length; i++){
 
                 const entity = this.entities[i];
+                const type = entity.type;
 
                 if (this.draw_hitboxes) {
-                    entity.draw(context, program_state, entity.transform, entity.material, "LINES");
+                    entity.draw(context, program_state, entity.transform, this.materials.basic, "LINES");
                 }
 
                 if (entity.model !== null) {
-                    entity.model.draw(context, program_state, entity.transformModel(), entity.model_mat);
+                    
+                    let model_mat = this.materials.phong.override({
+                        color: entity.model_color
+                    });
+                    switch(type){
+                        case("Cat"):
+                            model_mat = this.materials.cat;
+                            break;
+                    }
+
+                    entity.model.draw(context, program_state, entity.transformModel(), model_mat);
                 }
 
                 // move entities
                 let target = null;
-                if(entity.isCat()==="cat") {
+                if(type === "Cat") {
                     target = getPosVector(this.sammy.transform);
                     //console.log(this.sammy.transform+"\n"+entity.transformModel())
                     if(((Math.pow((this.sammy.transform[0][3]-entity.transformModel()[0][3]),2)) + (Math.pow((this.sammy.transform[2][3]-entity.transformModel()[2][3]),2))) < 4){
@@ -302,8 +329,6 @@ class Main_Scene extends Scene {
                 }
 
             }
-            this.sammy.model.draw(context, program_state, this.sammy.transformModel(), this.sammy.model_mat);
-            this.sammy.doMovement(dt);
         }
 
         ////////////////////////////////////////////
