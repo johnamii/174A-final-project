@@ -15,7 +15,7 @@ export function boxesIntersect(box1, box2){
     const b1Min = box1.min();
     const b2Max = box2.max();
     const b2Min = box2.min();
-    //console.log (b1Max(), box2.max());
+    
     if (b1Max.x < b2Min.x || b1Min.x > b2Max.x) return false;
     if (b1Max.y < b2Min.y || b1Min.y > b2Max.y) return false;
     if (b1Max.z < b2Min.z || b1Min.z > b2Max.z) return false;
@@ -196,18 +196,22 @@ class Entity extends Cube_Outline {
         return this.transform;
     }
 
-    checkEntityCollisions(entities){
+    checkEntityCollisions(entities, t){
          // check collisions for starship
          for (let i = 0; i < entities.length; i++) {
             if (boxesIntersect(this, entities[i])) {
-                console.log(this.type + " collided with " + entities[i].type)
-                this.onCollision();
-                entities[i].onCollision();
+
+                const type = entities[i].type
+                console.log(this.type + " collided with " + type);
+
+                this.onCollision(type, t);
+
+                entities[i].onCollision(this.type);
             }
         }
     }
 
-    onCollision(){
+    onCollision(colliderType){
 
     }
 
@@ -216,12 +220,19 @@ class Entity extends Cube_Outline {
     }
 
     doMovement(dt){
-
         let speed = dt * this.speed;
         let rot = dt * this.turn * 4;
-        
+        const x = [this.transform[0][3]];
+        const y = [this.transform[2][3]];
         this.transform.post_multiply(Mat4.rotation(rot, 0, 1, 0));
         this.transform.post_multiply(Mat4.translation(...this.thrust.times(speed)));
+        let newX = this.transform[0][3];
+        let newY = this.transform[2][3];
+
+        if(newX > 49 || newX < -49 || newY > 74 || newY < -74){
+            this.transform[0][3] = x;
+            this.transform[2][3] = y;
+        }
     }
 }
 
@@ -233,19 +244,26 @@ export class Starship extends Entity {
         this.lastHit = null;
         this.model = new Shape_From_File("assets/starship.obj");
     }
+
+    onCollision(colliderType, t){
+        this.changeHealth(t)
+    }
+
     changeHealth(t){
         if (this.lastHit == null || t > (1 + this.lastHit)){
             if(this.health !==""){
                 this.health = this.health.substring(0, this.health.length-1);
             }
-            console.log("just got hit!");
+            console.log("You lost some health!");
             this.lastHit = t;
         }
 
     }
+
     transformModel(){
         return this.transform.times(Mat4.translation(0.3, 0, -0.2)).times(Mat4.scale(1.1, 1.1, 1.1))
     }
+
     doMovement(dt){
         super.doMovement(dt);
 
@@ -435,17 +453,22 @@ export class RoyceHall extends Entity {
 
         this.type = "Royce Hall";
 
+        // model 30, 30, 30
+        this.box_dims = [10, 25, 50]
+
         this.transform = this.transform
-            .times(Mat4.scale(40, 40, 40))
-            .times(Mat4.translation(0, 0.2, 0))
-            .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
+            .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
+            .times(Mat4.translation(0, 0.7, 0))
+            
 
         this.model = new Shape_From_File("assets/royce_hall.obj");
-        // this.model_mat = new Material(new defs.Textured_Phong(), {
-        //     texture: new Texture("assets/royce_hall.png"),
-        //     color: hex_color("#ffffff"),
-        //     ambient:0.5, diffusivity: 0.1, specularity: 0.1
-        // });
+    }
+
+    transformModel(){
+        return this.transform
+            .times(Mat4.translation(0.9, -0.51, 0))
+            .times(Mat4.scale(3.5, 30/25, 30/55))
+            .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
     }
 
     doMovement() { return; }
