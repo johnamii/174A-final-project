@@ -15,7 +15,7 @@ export function boxesIntersect(box1, box2){
     const b1Min = box1.min();
     const b2Max = box2.max();
     const b2Min = box2.min();
-    //console.log (b1Max(), box2.max());
+    
     if (b1Max.x < b2Min.x || b1Min.x > b2Max.x) return false;
     if (b1Max.y < b2Min.y || b1Min.y > b2Max.y) return false;
     if (b1Max.z < b2Min.z || b1Min.z > b2Max.z) return false;
@@ -442,17 +442,22 @@ export class RoyceHall extends Entity {
 
         this.type = "Royce Hall";
 
+        // model 30, 30, 30
+        this.box_dims = [10, 25, 50]
+
         this.transform = this.transform
-            .times(Mat4.scale(40, 40, 40))
-            .times(Mat4.translation(0, 0.2, 0))
-            .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
+            .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
+            .times(Mat4.translation(0, 0.7, 0))
+            
 
         this.model = new Shape_From_File("assets/royce_hall.obj");
-        // this.model_mat = new Material(new defs.Textured_Phong(), {
-        //     texture: new Texture("assets/royce_hall.png"),
-        //     color: hex_color("#ffffff"),
-        //     ambient:0.5, diffusivity: 0.1, specularity: 0.1
-        // });
+    }
+
+    transformModel(){
+        return this.transform
+            .times(Mat4.translation(0.9, -0.51, 0))
+            .times(Mat4.scale(3.5, 30/25, 30/55))
+            .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
     }
 
     doMovement() { return; }

@@ -390,7 +390,11 @@ class Main_Scene extends Scene {
         }
 
         // check collisions
-        this.sammy.checkEntityCollisions(entities);
+        this.sammy.checkEntityCollisions(entities.concat(this.boundaries));
+
+        // for (let i = 0; i < entities.length; i++) {
+        //     entities[i].checkEntityCollisions(this.boundaries);
+        // }
 
         ////////////////////////////////////////////
         // CAMERA STUFF
