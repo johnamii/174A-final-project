@@ -271,8 +271,7 @@ class Main_Scene extends Scene {
                 this.sammy.draw(context, program_state, this.sammy.transform, this.sammy.material, "LINES");
             }
 
-            this.sammy.model.draw(context, program_state, this.sammy.transformModel(), this.sammy.model_mat);
-            this.sammy.doMovement(dt);
+
 
             for (let i = 0; i < this.entities.length; i++){
 
@@ -287,10 +286,24 @@ class Main_Scene extends Scene {
                 }
 
                 // move entities
-                let target = entity.isCat() ? getPosVector(this.sammy.transform) : null;
-                entity.doMovement(dt, target);
-            }
+                let target = null;
+                if(entity.isCat()==="cat") {
+                    target = getPosVector(this.sammy.transform);
+                    //console.log(this.sammy.transform+"\n"+entity.transformModel())
+                    if(((Math.pow((this.sammy.transform[0][3]-entity.transformModel()[0][3]),2)) + (Math.pow((this.sammy.transform[2][3]-entity.transformModel()[2][3]),2))) < 4){
+                        this.sammy.changeHealth(t);
+                    }
+                    else {
+                        entity.doMovement(dt, target);
+                    }
+                }
+                else{
+                    entity.doMovement(dt, target);
+                }
 
+            }
+            this.sammy.model.draw(context, program_state, this.sammy.transformModel(), this.sammy.model_mat);
+            this.sammy.doMovement(dt);
         }
 
         ////////////////////////////////////////////

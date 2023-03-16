@@ -158,7 +158,7 @@ class Entity extends Cube_Outline {
         this.material = new Material(new defs.Basic_Shader());
     }
 
-    isCat(){ return false; }
+    isCat(){ return "cube"; }
     isBoundary(){ return false; }
 
     transformModel(){
@@ -190,7 +190,8 @@ class Entity extends Cube_Outline {
 export class Starship extends Entity {
     constructor(start_pos, speed_mult){
         super(start_pos, speed_mult);
-        
+        this.health = 3;
+        this.lastHit = null;
         this.model = new Shape_From_File("assets/starship.obj");
         this.model_mat = new Material(new defs.Phong_Shader(), {color: hex_color("#ffffff")});
         // this.model_mat = new Material(new defs.Textured_Phong(), {
@@ -199,11 +200,18 @@ export class Starship extends Entity {
         //     ambient:0.5, diffusivity: 0.1, specularity: 0.1
         // });
     }
+    changeHealth(t){
+        if (this.lastHit == null || t > (1 + this.lastHit)){
+            this.health= this.health -1;
+            console.log("just got hit!");
+            this.lastHit = t;
+        }
 
+    }
     transformModel(){
         return this.transform.times(Mat4.translation(0.3, 0, -0.2)).times(Mat4.scale(1.1, 1.1, 1.1))
     }
-
+    isCat(){return "starship";}
     doMovement(dt){
         super.doMovement(dt);
 
@@ -251,7 +259,7 @@ export class PowellCat extends Entity {
         })
     }
 
-    isCat(){ return true; }
+    isCat(){ return "cat"; }
 
     transformModel(){
         return this.transform.times(Mat4.rotation(Math.PI, 0, 1, 0));
@@ -311,7 +319,7 @@ export class Student extends Entity {
     }
 
     isBoundary(){ return true; }
-
+    isCat(){return "student";}
     transformModel(){
         return this.transform
             .times(Mat4.scale(1.3, 0.6, 1.3))
@@ -335,7 +343,7 @@ export class PowerUp extends Entity {
         super(start_pos);
 
     }
-
+    isCat(){return "powerUp";}
 }
 
 export class Obstacle extends Entity {
@@ -385,4 +393,5 @@ export class Obstacle extends Entity {
     }
 
     doMovement() { return; }
+    isCat(){return "obstacle";}
 }
