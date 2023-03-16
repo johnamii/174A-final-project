@@ -63,7 +63,7 @@ function loadEntities(difficultyMods) {
     let entities = [];
 
     for (let i = 0; i < difficultyMods.num_cats; i++) {
-        entities.push(new PowellCat(vec3(-10, 0, -10), difficultyMods.cat_speed));
+        entities.push(new PowellCat(vec3(-10 + i, 0, -10 + i), difficultyMods.cat_speed));
     }
 
     for (let i = 0; i < difficultyMods.num_students; i++) {
@@ -147,9 +147,23 @@ class Main_Scene extends Scene {
         this.startScreen = new Text_Interface();
     }
 
+    end_level(delivered){
+        this.in_between_levels = true;
+        
+        if (delivered === true) {
+            this.difficulty++;
+        }
+        else {
+            this.difficulty = 0;
+        }
+
+        this.entities = loadEntities(difficulties[this.difficulty]);
+    }
+
     make_control_panel(){
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("Start", ["Enter"], () => { this.in_between_levels = false })
+        this.key_triggered_button("Start", ["Enter"], () => { this.in_between_levels = false });
+        this.key_triggered_button("Temp raise level", ["m"], () => this.end_level(true))
         this.new_line();
         this.key_triggered_button("Explore Area", ["Control", "0"], () => this.attached = undefined);
         this.key_triggered_button("Starship", ["Control", "1"], () => this.attached = () => this.sammy.transform);
