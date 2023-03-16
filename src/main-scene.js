@@ -85,7 +85,7 @@ function loadEntities(difficultyMods) {
     for (let i = 0; i < difficultyMods.num_obstacles; i++) {
         arr.push(new Obstacle(vec3(i*2, 0, i * 3)))
     }
-    return entities;
+    return arr;
 }
 
 class Main_Scene extends Scene {
