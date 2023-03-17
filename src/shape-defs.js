@@ -212,7 +212,7 @@ class Entity extends Cube_Outline {
         return this.transform;
     }
 
-    checkEntityCollisions(entities, t){
+    checkEntityCollisions(entities){
          // check collisions for starship
          for (let i = 0; i < entities.length; i++) {
             if (boxesIntersect(this, entities[i])) {
@@ -223,7 +223,7 @@ class Entity extends Cube_Outline {
                 }
                 //console.log(this.type + " collided with " + type);
 
-                this.onCollision(type, t);
+                this.onCollision(type);
 
                 entities[i].onCollision(this.type);
             }
@@ -282,13 +282,10 @@ export class Starship extends Entity {
         this.model = new Shape_From_File("assets/starship.obj");
     }
 
-    onCollision(colliderType, t){
-        if (colliderType === "Cat"){
-            this.changeHealth(t);
-        }
+    onCollision(colliderType){
         switch(colliderType){
             case("Cat"):
-                this.changeHealth(t);
+                this.changeHealth();
                 break;
             case("Mushroom"):
                 this.speed_multiplier = 1.5;
@@ -309,13 +306,13 @@ export class Starship extends Entity {
         this.jumpHeight = 1;
     }
 
-    changeHealth(t){
-        if (this.invincible <= 0 && (this.lastHit == null || t > (1 + this.lastHit))){
+    changeHealth(){
+        if (this.invincible <= 0){
             if(this.health !==""){
                 this.health = this.health.substring(0, this.health.length-1);
+                this.invincible = 1;
             }
             console.log("You lost some health!");
-            this.lastHit = t;
         }
 
     }
