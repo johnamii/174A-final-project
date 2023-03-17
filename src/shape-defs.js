@@ -394,14 +394,20 @@ export class PowellCat extends Entity {
 export class Target extends Entity {
     constructor(start_pos){
         super(start_pos);
-        this.model = new Shape_From_File("assets/dennis.OBJ");
-        this.model_color = hex_color("000000");
-        this.box_dims = [1, 10, 1];
+        
+        this.box_dims = [2, 4, 2];
+
         this.type = "Gene";
+
         this.transform = this.transform
-            .times(Mat4.scale(.8, 1.25, .8))
-            .times(Mat4.translation(1, 1.5, 1))
-            .times(Mat4.rotation(-Math.PI/2,0,1,0));
+            .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
+            .times(Mat4.translation(1, 0.75, 1))
+
+        this.model = new Shape_From_File("assets/muscles.obj");
+    }
+
+    transformModel(){
+        return this.transform.times(Mat4.scale(1.5, 0.6, 1.5)).times(Mat4.translation(0, 0.5, 0));
     }
 }
 

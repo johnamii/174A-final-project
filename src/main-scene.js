@@ -12,11 +12,10 @@ const {
     Canvas_Widget, Code_Widget, Text_Widget
 } = tiny;
 
-var difficulty = 0;
 const difficulties = [
     {
         num_students: 10,
-        student_speed: 0.5,
+        student_speed: 0.75,
         num_cats: 1,
         cat_speed: 0.5,
         min_cat_spawn_distance: 30,
@@ -28,21 +27,21 @@ const difficulties = [
         num_students: 15,
         student_speed: 0.6,
         num_cats: 2,
-        cat_speed: 0.75,
+        cat_speed: 0.9,
         min_cat_spawn_distance: 25,
         num_power_ups: 3,
         max_target_spawn_distance: 35,
-        num_obstacles: 6
+        num_obstacles: 5
     },
     {
-        num_students: 20,
-        student_speed: 0.7,
+        num_students: 15,
+        student_speed: 1,
         num_cats: 3,
-        cat_speed: 0.75,
+        cat_speed: 1,
         min_cat_spawn_distance: 20,
         num_power_ups: 1,
         max_target_spawn_distance: 40,
-        num_obstacles: 9
+        num_obstacles: 7
     },
     {
         num_students: 0,
@@ -158,16 +157,6 @@ class Main_Scene extends Scene {
                 color: hex_color("#000000"),
                 ambient:1, diffusivity: 0.1, specularity: 0.1
             }),
-            royce_hall: new Material(new defs.Textured_Phong(), {
-                //texture: new Texture("assets/garfield.png"),
-                color: hex_color("#b06b2a"),
-                ambient:1, diffusivity: 0.1, specularity: 0.1
-            }),
-            gene: new Material(new defs.Textured_Phong(),{
-                texture: new Texture("assets/dennis.jpg"),
-                color: hex_color("#ffffff"),
-                ambient:.5, diffusivity: 0.1, specularity: 0
-            }),
             mushroom: new Material(new defs.Textured_Phong(), {
                 texture: new Texture("assets/mushroom.png", ),
                 ambient: 1, diffusivity: 0.1, specularity: 1
@@ -184,13 +173,9 @@ class Main_Scene extends Scene {
                 texture: new Texture("assets/sidewalk-3.jpg"),
                 ambient: 1, diffusivity: 1, specularity: 1
             }),
-            flag: new Material(new defs.Textured_Phong(), {
-                texture: new Texture("assets/star.png", ),          //change later?
-                ambient: 1, diffusivity: 1, specularity: 1
-            }),
         }
 
-        this.draw_hitboxes = true;
+        this.draw_hitboxes = false;
         this.in_between_levels = true;
         this.difficulty = 0;
 
@@ -459,7 +444,7 @@ class Main_Scene extends Scene {
                     
                     switch(type){
                         case("Gene"):
-                            model_mat = this.materials.gene;
+                            model_mat = this.materials.invincible;
                             break;
                         case("Cat"):
                             var model_mat = this.materials.cat;
