@@ -627,7 +627,7 @@ export class Flag extends Entity {
         this.type = "Flag";
 
         // model 30, 30, 30
-        this.box_dims = [10, 25, 50]
+        this.box_dims = [1, 25, 1]
 
         this.transform = this.transform
             .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
@@ -640,7 +640,7 @@ export class Flag extends Entity {
     transformModel(){
         return this.transform
             .times(Mat4.translation(0, -0.2, 0))
-            .times(Mat4.scale(3.5, 30/25, 30/55))
+            .times(Mat4.scale(30, 1, 5))
             .times(Mat4.rotation(Math.PI* (3/2), 0, 1, 0));
     }
 
