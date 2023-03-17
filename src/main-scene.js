@@ -398,6 +398,9 @@ class Main_Scene extends Scene {
                     case("Fountain"):
                         var model_mat = this.materials.phong.override({color:hex_color("#ccbbbb")});
                         break;
+                    case("Flag"):
+                        model_mat = this.materials.mushroom
+                        break;
                     default:
                         model_mat = this.materials.brick;
                 }
