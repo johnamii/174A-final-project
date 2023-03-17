@@ -1,7 +1,7 @@
 import {defs, tiny} from './provided/common.js';
 import {
     Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
-    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, PowellLib
+    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, Target, PowellLib
 } from "./shape-defs.js";
 
 import { Text_Line } from './provided/text-line.js'
@@ -85,6 +85,7 @@ function loadEntities(difficultyMods) {
     for (let i = 0; i < difficultyMods.num_obstacles; i++) {
         arr.push(new Obstacle(vec3(i*2, 0, i * 3)))
     }
+    arr.push(new Target(vec3(0,0,-60)));
     return arr;
 
 }
@@ -141,11 +142,12 @@ class Main_Scene extends Scene {
                 color: hex_color("#b06b2a"),
                 ambient:1, diffusivity: 0.1, specularity: 0.1
             }),
-            powell_lib: new Material(new defs.Textured_Phong(), {
-                //texture: new Texture("assets/garfield.png"),
-                color: hex_color("#b06b2a"),
-                ambient:1, diffusivity: 0.1, specularity: 0.1
-            }),
+            gene: new Material(new defs.Textured_Phong(),{
+                texture: new Texture("assets/dennis.jpg"),
+                color: hex_color("#ffffff"),
+                ambient:.5, diffusivity: 0.1, specularity: 0
+            })
+
         }
 
         this.draw_hitboxes = true;
@@ -160,12 +162,16 @@ class Main_Scene extends Scene {
         entities = loadEntities(difficulties[this.difficulty]);
 
         this.buildingDims = vec3(10, 7, 20);
-        this.boundaries = [  
+        this.boundaries = [
+            // invisible border boundary
+            //new BoundaryBox(this.worldDims, vec3(0, 24.99, 0)),
+  
             // ROYCE HALL
+            //new BoundaryBox(this.buildingDims, vec3(-40, this.buildingDims[1], 0)),
             new RoyceHall(vec3(-40, this.buildingDims[1], 0)),
-
             // POWELL LIBRARY
             new PowellLib(vec3(40, this.buildingDims[1], 0)),
+            //new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
         ];
 
         this.world = [
@@ -314,9 +320,7 @@ class Main_Scene extends Scene {
         for (let i = 0; i < this.boundaries.length; i++) {
             const boundary = this.boundaries[i];
 
-            if (this.draw_hitboxes){
-                boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
-            }
+            boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
 
             if(boundary.model !== null){
                 boundary.model.draw(context, program_state, boundary.transformModel(), this.materials.brick);
@@ -361,6 +365,9 @@ class Main_Scene extends Scene {
                         color: entity.model_color
                     });
                     switch(type){
+                        case("Gene"):
+                            model_mat = this.materials.gene;
+                            break;
                         case("Cat"):
                             model_mat = this.materials.cat;
                             break;
@@ -381,14 +388,23 @@ class Main_Scene extends Scene {
                 let target = null;
                 if(type === "Cat") {
                     target = getPosVector(this.sammy.transform);
+                    //console.log(this.sammy.transform+"\n"+entity.transformModel())
+                    if(((Math.pow((this.sammy.transform[0][3]-entity.transformModel()[0][3]),2)) + (Math.pow((this.sammy.transform[2][3]-entity.transformModel()[2][3]),2))) < 4){
+                        this.sammy.changeHealth(t);
+                    }
+                    else {
+                        entity.doMovement(dt, target);
+                    }
                 }
-                entity.doMovement(dt, target);
+                else{
+                    entity.doMovement(dt, target);
+                }
 
             }
         }
 
         // check collisions
-        this.sammy.checkEntityCollisions(entities.concat(this.boundaries), t);
+        this.sammy.checkEntityCollisions(entities.concat(this.boundaries));
 
         for (let i = 0; i < entities.length; i++) {
             entities[i].checkEntityCollisions(this.boundaries);
