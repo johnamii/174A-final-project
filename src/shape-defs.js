@@ -22,6 +22,22 @@ export function boxesIntersect(box1, box2){
     return true;
 }
 
+function reduceToZero(n, factor){
+
+    if ((n >= -factor && n < 0)  || (n <= factor && n > 0)) {
+        return 0;
+    }
+
+    if (n > 0) {
+        n -= factor;
+    }
+    else if (n < 0) {
+        n += factor;
+    }
+
+    return n;
+}
+
 const meters_per_frame = 10;
 
 export class Axis extends Shape {
@@ -160,6 +176,7 @@ class Entity extends Cube_Outline {
         this.speed_multiplier = speed_mult ?? 1;
         this.speed = this.speed_multiplier * meters_per_frame;
         this.thrust = vec3(0, 0, 0);
+        this.knockback = vec3(0, 0, 0);
         this.turn = 0;
         this.transform = Mat4.identity()
             .times(Mat4.translation(start_pos[0], start_pos[1]+1, start_pos[2]))
@@ -190,8 +207,6 @@ class Entity extends Cube_Outline {
         return {x: minX, y: minY, z: minZ}
     }
 
-    isBoundary(){ return false; }
-
     transformModel(){
         return this.transform;
     }
@@ -213,7 +228,10 @@ class Entity extends Cube_Outline {
     }
 
     onCollision(colliderType){
-
+        this.knockback[0] = this.thrust[0] * -1;
+        this.knockback[1] = this.thrust[1] * -1;
+        this.knockback[2] = this.thrust[2] * -1;
+        console.log(this.type, this.thrust[2])
     }
 
     animate(){
@@ -225,8 +243,20 @@ class Entity extends Cube_Outline {
         let rot = dt * this.turn * 4;
         const x = [this.transform[0][3]];
         const y = [this.transform[2][3]];
-        this.transform.post_multiply(Mat4.rotation(rot, 0, 1, 0));
-        this.transform.post_multiply(Mat4.translation(...this.thrust.times(speed)));
+        if (this.knockback[0] !== 0 || this.knockback[1] !== 0 || this.knockback[2] !== 0) {
+            this.transform.post_multiply(Mat4.rotation(rot, 0, 1, 0));
+            this.transform.post_multiply(Mat4.translation(...this.knockback.times(speed)));
+
+            let factor = 0.03;
+            this.knockback[0] = reduceToZero(this.knockback[0], factor);
+            this.knockback[1] = reduceToZero(this.knockback[1], factor);
+            this.knockback[2] = reduceToZero(this.knockback[2], factor);
+        }
+        else {
+            this.transform.post_multiply(Mat4.rotation(rot, 0, 1, 0));
+            this.transform.post_multiply(Mat4.translation(...this.thrust.times(speed)));
+        }
+        
         let newX = this.transform[0][3];
         let newY = this.transform[2][3];
 
@@ -247,6 +277,7 @@ export class Starship extends Entity {
     }
 
     onCollision(colliderType, t){
+        super.onCollision(colliderType);
         if (colliderType === "Cat"){
             this.changeHealth(t);
         }
@@ -366,23 +397,19 @@ export class Student extends Entity {
         this.model_color = color(Math.random(), Math.random(), Math.random(), 1);
     }
 
-    isBoundary(){ return true; }
     transformModel(){
         return this.transform
             .times(Mat4.scale(1.3, 0.6, 1.3))
-            .times(Mat4.translation(0, 0.4, 0))
-            
+            .times(Mat4.translation(0, 0.4, 0));
     }
 
     doMovement(dt){
         super.doMovement(dt);
-        if(Math.floor(Math.random()*500)===69){
-            let sign = 2*Math.floor(2*Math.random()-1)+1;
-            this.transform = this.transform.times(Mat4.rotation(Math.PI/2*sign,0,1,0))
+        if( Math.floor(Math.random()*500)===69 ) {
+            let sign = 2 * Math.floor( 2 * Math.random() - 1 ) + 1;
+            this.transform = this.transform.times(Mat4.rotation(Math.PI / 2 * sign, 0, 1, 0));
         }
-
     }
-
 }
 
 export class PowerUp extends Entity {
@@ -415,7 +442,7 @@ export class Obstacle extends Entity {
                 this.model = new Shape_From_File("assets/barrier.obj");
                 this.model_color = hex_color("#666666");
 
-                this.box_dims = [4, 2, 3];
+                this.box_dims = [4, 2, 0.5];
 
                 this.transform = this.transform
                     .times(Mat4.translation(0, 0.6, 0));
@@ -423,7 +450,7 @@ export class Obstacle extends Entity {
                 break;
             default:
                 this.model = new Shape_From_File("assets/crate.obj");
-                this.model_color = hex_color("ddbb99");
+                this.model_color = hex_color("#ddbb99");
 
                 this.box_dims = [3, 3, 3];
 
@@ -439,7 +466,7 @@ export class Obstacle extends Entity {
             case(0): //sign
                 return this.transform.times(Mat4.scale(1, 2/3, 1)).times(Mat4.translation(0, 0.5, 0));
             case(1): //barrier
-                return this.transform.times(Mat4.scale(3/4, 3/2, 1));
+                return this.transform.times(Mat4.scale(3/4, 3/2, 4));
             default: //crate
                 return this.transform.times(Mat4.scale(1.3, 1.3, 1.3)).times(Mat4.rotation(Math.PI/2, 0, 1, 0));
             
@@ -447,7 +474,6 @@ export class Obstacle extends Entity {
     }
 
     doMovement() { return; }
-    isCat(){return "obstacle";}
 }
 
 export class RoyceHall extends Entity {
@@ -469,7 +495,7 @@ export class RoyceHall extends Entity {
 
     transformModel(){
         return this.transform
-            .times(Mat4.translation(0.9, -0.51, 0))
+            .times(Mat4.translation(0.9, -0.54, 0))
             .times(Mat4.scale(3.5, 30/25, 30/55))
             .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
     }
@@ -496,7 +522,7 @@ export class PowellLib extends Entity {
         return this.transform
             .times(Mat4.rotation(Math.PI, 0, 1, 0))
             .times(Mat4.scale(1.9, 0.8, .4))
-            .times(Mat4.translation(0.41, -0.05, 0));
+            .times(Mat4.translation(0.41, -0.06, 0));
     }
 
     doMovement() { return; }
