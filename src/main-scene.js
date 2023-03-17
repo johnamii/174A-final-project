@@ -43,7 +43,18 @@ const difficulties = [
         num_power_ups: 1,
         max_target_spawn_distance: 40,
         num_obstacles: 9
-    }
+    },
+    {
+        num_students: 0,
+        student_speed: 0,
+        num_cats: 0,
+        cat_speed: 0,
+        min_cat_spawn_distance: 0,
+        num_power_ups: 0,
+        max_target_spawn_distance: 0,
+        num_obstacles: 0
+    },
+
 ];
 
 var entities = [];
@@ -84,7 +95,7 @@ function getRandomSpawn(type, flip){
     let x, z;
     switch(type){
         case("Object"):
-            x = Math.random() * 50 - 25;
+            x = Math.random() * 50 - 25;//Math.random() * (max - min + 1) + min)
             z = Math.random() * 120 - 60
             break;
         case("Cat"):
@@ -94,7 +105,7 @@ function getRandomSpawn(type, flip){
         case("Target"):
             let a = flip === true ? -1 : 1;
             x = Math.random() * 79 - 40;
-            z = Math.random() * 10 + (a * 65);
+            z = Math.random() * 8 + (a * 65);
             break;
     }
 
@@ -222,7 +233,7 @@ class Main_Scene extends Scene {
         this.in_between_levels = true;
         this.sammy.nextLevel = false;
         if (delivered === true) {
-            if (this.difficulty < 2) {
+            if (this.difficulty < 3) {
                 this.difficulty++;
             }
         }
@@ -282,10 +293,11 @@ class Main_Scene extends Scene {
         this.startScreen.draw(context, program_state, interfaceTransform, this.materials.interface)
         
         let textTransform = program_state.camera_transform.times(Mat4.translation(-1.5, 0, -2.99));
-        
+        let levelString = "" + (Number(this.difficulty)+1) + "";
         let strings = [
-            "Welcome to Starship: The Last Delivery",
-            'Press "Enter" to Start'
+            "Starship: The Last Delivery",
+            'Press "Enter" to Start',
+            "Level " + levelString
             ];
         for (let i = 0; i < strings.length; i++) {
             this.shapes.text.set_string(strings[i], context.context);
@@ -309,6 +321,25 @@ class Main_Scene extends Scene {
             textTransform.post_multiply(Mat4.translation(0, 0, 0));
         }
     }
+
+    drawEndGame(context, program_state){
+        let interfaceTransform = program_state.camera_transform
+            .times(Mat4.translation(0, 0, -3))
+            .times(Mat4.scale(2, 1, 1));
+        this.startScreen.draw(context, program_state, interfaceTransform, this.materials.interface)
+
+        let textTransform = program_state.camera_transform.times(Mat4.translation(-1.5, 0, -2.99));
+
+        let strings = [
+            "You won!!",
+            'Congratulations :)'
+        ];
+        for (let i = 0; i < strings.length; i++) {
+            this.shapes.text.set_string(strings[i], context.context);
+            this.shapes.text.draw(context, program_state, textTransform.times(Mat4.scale(0.05, 0.05, 0.05)), this.materials.text_image);
+            textTransform.post_multiply(Mat4.translation(0, -0.2, 0));
+        }
+    }
     drawGameOver(context, program_state){
         let interfaceTransform = program_state.camera_transform
             .times(Mat4.translation(0, 0, -3))
@@ -330,7 +361,10 @@ class Main_Scene extends Scene {
 
     display(context, program_state) { // Called once per frame of animation.
         //console.log(getPosVector(this.sammy.transform)[0])
-
+        if(this.difficulty===3){
+            this.drawEndGame(context, program_state);
+            return;
+        }
         ///////////////////////////////////////////
         // CONTEXT & WORLD
         ///////////////////////////////////////////
@@ -344,7 +378,7 @@ class Main_Scene extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         this.draw_world(context, program_state);  
-        
+
         ////////////////////////////////////////////
         // BOUNDARIES
         ////////////////////////////////////////////
