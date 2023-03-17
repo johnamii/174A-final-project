@@ -324,18 +324,19 @@ export class Starship extends Entity {
         else{
             this.thrust[1] = 0;
         }
-         // get y coordinate of center of starship, fall until hitting ground
+
+        // get y coordinate of center of starship, fall until hitting ground
         let transformY = this.transform[1][3] - this.box_dims[1];
 
         if (transformY > 0.2 ){
-             let fall = -0.2 * dt * 60;
-             let x = transformY+fall;
-             if (x > 0) {
+            let fall = -0.2 * dt * 60;
+            let x = transformY+fall;
+            if (x > 0) {
                 this.transform = this.transform.times(Mat4.translation(0, fall, 0));
-             }
-             else {
+            }
+            else {
                 this.transform[1][3] = 1;
-             }
+            }
          }
         else{
             this.transform[1][3] = 1;
