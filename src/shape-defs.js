@@ -448,6 +448,16 @@ export class Student extends Entity {
             let sign = 2 * Math.floor( 2 * Math.random() - 1 ) + 1;
             this.transform = this.transform.times(Mat4.rotation(Math.PI / 2 * sign, 0, 1, 0));
         }
+
+        if (this.turn > 0) {
+            this.turn -= 0.1;
+        }
+    }
+
+    onCollision(type){
+        super.onCollision(type);
+
+        this.turn = 1
     }
 }
 
