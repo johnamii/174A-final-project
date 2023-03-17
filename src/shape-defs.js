@@ -218,7 +218,9 @@ class Entity extends Cube_Outline {
             if (boxesIntersect(this, entities[i])) {
 
                 const type = entities[i].type;
-                
+                if(this.type === "Starship" && type === "Gene"){
+                    this.nextLevel = true;
+                }
                 console.log(this.type + " collided with " + type);
 
                 this.onCollision(type, t);
@@ -275,6 +277,7 @@ export class Starship extends Entity {
         this.lastHit = null;
         this.invincible = 0;
         this.jumpHeight = 1;
+        this.nextLevel = false;
         
         this.model = new Shape_From_File("assets/starship.obj");
     }
@@ -324,18 +327,19 @@ export class Starship extends Entity {
         else{
             this.thrust[1] = 0;
         }
-         // get y coordinate of center of starship, fall until hitting ground
+
+        // get y coordinate of center of starship, fall until hitting ground
         let transformY = this.transform[1][3] - this.box_dims[1];
 
         if (transformY > 0.2 ){
-             let fall = -0.2 * dt * 60;
-             let x = transformY+fall;
-             if (x > 0) {
+            let fall = -0.2 * dt * 60;
+            let x = transformY+fall;
+            if (x > 0) {
                 this.transform = this.transform.times(Mat4.translation(0, fall, 0));
-             }
-             else {
+            }
+            else {
                 this.transform[1][3] = 1;
-             }
+            }
          }
         else{
             this.transform[1][3] = 1;

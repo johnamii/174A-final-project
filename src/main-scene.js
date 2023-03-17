@@ -48,30 +48,57 @@ const difficulties = [
 
 var entities = [];
 
-function loadEntities(difficultyMods) {
+function loadEntities(difficultyMods, curLevel) {
     entities.splice(0, entities.length);
 
     let arr = [];
 
     for (let i = 0; i < difficultyMods.num_cats; i++) {
-        arr.push(new PowellCat(vec3(-10 + i, 0, -10 + i), difficultyMods.cat_speed));
+        arr.push(new PowellCat(getRandomSpawn("Cat"), difficultyMods.cat_speed));
     }
 
     for (let i = 0; i < difficultyMods.num_students; i++) {
-        arr.push(new Student(vec3(0, 0, 0), difficultyMods.student_speed));
+        arr.push(new Student(getRandomSpawn("Object"), difficultyMods.student_speed));
     }
 
     for (let i = 0; i < difficultyMods.num_obstacles; i++) {
-        arr.push(new Obstacle(vec3(i*2, 0, i * 3)))
+        arr.push(new Obstacle(getRandomSpawn("Object")));
     }
 
     for (let i = 0; i < difficultyMods.num_power_ups; i++) {
-        arr.push(new PowerUp(vec3(i*4, 0, i*5)))
+        arr.push(new PowerUp(getRandomSpawn("Object")));
     }
 
-    arr.push(new Target(vec3(0,0,-60)));
+    arr.push(new Target(getRandomSpawn("Target", curLevel % 2 === 0)));
 
     return arr;
+}
+
+function getRandomSpawn(type, flip){
+
+    // x between buildings: -29, 29
+    // x max -49, 49
+    // z buildingEnds -50, 50
+    // z max -74, 74
+
+    let x, z;
+    switch(type){
+        case("Object"):
+            x = Math.random() * 50 - 25;
+            z = Math.random() * 120 - 60
+            break;
+        case("Cat"):
+            x = Math.random() * 20 - 10;
+            z = Math.random() * 20 - 10;
+            break;
+        case("Target"):
+            let a = flip === true ? -1 : 1;
+            x = Math.random() * 79 - 40;
+            z = Math.random() * 10 + (a * 65);
+            break;
+    }
+
+    return vec3(x, 0, z);
 }
 
 class Main_Scene extends Scene {
@@ -83,7 +110,8 @@ class Main_Scene extends Scene {
         this.shapes = {
             axis: new Axis(),
             skybox: new Skybox(),
-            text: new Text_Line(50)
+            text: new Text_Line(50),
+            cube: new defs.Cube()
         };
 
         // *** Materials
@@ -157,7 +185,7 @@ class Main_Scene extends Scene {
         const starshipSpawn = vec3(0, 2, 50);
         this.sammy = new Starship(starshipSpawn, 1);
 
-        entities = loadEntities(difficulties[this.difficulty]);
+        entities = loadEntities(difficulties[this.difficulty], this.difficulty);
 
         this.buildingDims = vec3(10, 7, 20);
         this.boundaries = [
@@ -179,7 +207,12 @@ class Main_Scene extends Scene {
             // grass on ground
             new Ground(vec3(this.worldDims[0], 0.01, this.worldDims[2]), vec3(0, 0, 0), 4),
             // sidewalk
-            new Ground(vec3(40, 1, 10), vec3(0, 0.02, 0), 32)
+            // dim, position
+            new Ground(vec3(40, 1, 15), vec3(0, 0.03, 0), 32), // center horizontal
+            new Ground(vec3(5, 1, 75), vec3(-4, 0.02, 0), 16), // left center vertical
+            new Ground(vec3(5, 1, 75), vec3(4, 0.02, 0), 16), // right center vertical
+            new Ground(vec3(50, 1, 10), vec3(0, 0.03, 6.2), 32), // close horizontal
+            new Ground(vec3(50, 1, 5), vec3(0, 0.03, -13), 32) // far horizontal
         ];
 
         this.startScreen = new Text_Interface();
@@ -187,7 +220,7 @@ class Main_Scene extends Scene {
 
     end_level(delivered){
         this.in_between_levels = true;
-
+        this.sammy.nextLevel = false;
         if (delivered === true) {
             if (this.difficulty < 2) {
                 this.difficulty++;
@@ -295,8 +328,8 @@ class Main_Scene extends Scene {
         }
     }
 
-
     display(context, program_state) { // Called once per frame of animation.
+        //console.log(getPosVector(this.sammy.transform)[0])
 
         ///////////////////////////////////////////
         // CONTEXT & WORLD
@@ -422,7 +455,9 @@ class Main_Scene extends Scene {
 
         // check collisions
         this.sammy.checkEntityCollisions(entities.concat(this.boundaries));
-
+        if(this.sammy.nextLevel){
+            this.end_level(true);
+        }
         for (let i = 0; i < entities.length; i++) {
             entities[i].checkEntityCollisions(this.boundaries);
         }
