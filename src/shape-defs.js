@@ -615,3 +615,30 @@ export class Fountain extends Entity {
 
     doMovement() { return; }
 }
+
+export class Flag extends Entity {
+    constructor(start_pos){
+        super(start_pos);
+
+        this.type = "Flag";
+
+        // model 30, 30, 30
+        this.box_dims = [10, 25, 50]
+
+        this.transform = this.transform
+            .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
+            .times(Mat4.translation(0, 0.7, 0))
+
+
+        this.model = new Shape_From_File("assets/flag.obj");
+    }
+
+    transformModel(){
+        return this.transform
+            .times(Mat4.translation(0, -0.2, 0))
+            .times(Mat4.scale(3.5, 30/25, 30/55))
+            .times(Mat4.rotation(Math.PI* (3/2), 0, 1, 0));
+    }
+
+    doMovement() { return; }
+}

@@ -1,7 +1,7 @@
 import {defs, tiny} from './provided/common.js';
 import {
     Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
-    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, Target, PowellLib
+    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, Target, PowellLib, Flag
 } from "./shape-defs.js";
 
 import { Text_Line } from './provided/text-line.js'
@@ -141,7 +141,11 @@ class Main_Scene extends Scene {
             invincible: new Material(new defs.Textured_Phong(), {
                 texture: new Texture("assets/invincible.png", ),
                 ambient: 1, diffusivity: 1, specularity: 1
-            })
+            }),
+            flag: new Material(new defs.Textured_Phong(), {
+                texture: new Texture("assets/star.png", ),          //change later?
+                ambient: 1, diffusivity: 1, specularity: 1
+            }),
         }
 
         this.draw_hitboxes = true;
@@ -166,6 +170,9 @@ class Main_Scene extends Scene {
             // POWELL LIBRARY
             new PowellLib(vec3(40, this.buildingDims[1], 0)),
             //new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
+            //FLAG
+            new Flag(vec3(0, 0, -60)),
+
         ];
 
         this.world = [
@@ -394,6 +401,9 @@ class Main_Scene extends Scene {
                             model_mat = this.materials.phong.override({
                                 color:hex_color("#ffffff"), specularity:1, diffusivity: 1
                             });
+                            break;
+                        case("Flag"):
+                            model_mat = this.materials.basic;
                             break;
                         default:
                             model_mat = this.materials.phong.override({
