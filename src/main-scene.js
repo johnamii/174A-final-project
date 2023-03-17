@@ -200,7 +200,12 @@ class Main_Scene extends Scene {
             // grass on ground
             new Ground(vec3(this.worldDims[0], 0.01, this.worldDims[2]), vec3(0, 0, 0), 4),
             // sidewalk
-            new Ground(vec3(40, 1, 10), vec3(0, 0.02, 0), 32)
+            // dim, position
+            new Ground(vec3(40, 1, 15), vec3(0, 0.03, 0), 32), // center horizontal
+            new Ground(vec3(5, 1, 75), vec3(-4, 0.02, 0), 16), // left center vertical
+            new Ground(vec3(5, 1, 75), vec3(4, 0.02, 0), 16), // right center vertical
+            new Ground(vec3(50, 1, 10), vec3(0, 0.03, 6.2), 32), // close horizontal
+            new Ground(vec3(50, 1, 5), vec3(0, 0.03, -13), 32) // far horizontal
         ];
 
         this.startScreen = new Text_Interface();
