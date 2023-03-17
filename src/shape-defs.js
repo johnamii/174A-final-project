@@ -218,7 +218,9 @@ class Entity extends Cube_Outline {
             if (boxesIntersect(this, entities[i])) {
 
                 const type = entities[i].type;
-                
+                if(this.type === "Starship" && type === "Gene"){
+                    this.nextLevel = true;
+                }
                 console.log(this.type + " collided with " + type);
 
                 this.onCollision(type, t);
@@ -275,6 +277,7 @@ export class Starship extends Entity {
         this.lastHit = null;
         this.invincible = 0;
         this.jumpHeight = 1;
+        this.nextLevel = false;
         
         this.model = new Shape_From_File("assets/starship.obj");
     }
