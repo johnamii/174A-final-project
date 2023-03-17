@@ -213,7 +213,7 @@ class Main_Scene extends Scene {
 
     end_level(delivered){
         this.in_between_levels = true;
-
+        this.sammy.nextLevel = false;
         if (delivered === true) {
             if (this.difficulty < 2) {
                 this.difficulty++;
@@ -445,7 +445,9 @@ class Main_Scene extends Scene {
 
         // check collisions
         this.sammy.checkEntityCollisions(entities.concat(this.boundaries));
-
+        if(this.sammy.nextLevel){
+            this.end_level(true);
+        }
         for (let i = 0; i < entities.length; i++) {
             entities[i].checkEntityCollisions(this.boundaries);
         }
