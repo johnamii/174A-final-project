@@ -527,3 +527,28 @@ export class PowellLib extends Entity {
 
     doMovement() { return; }
 }
+
+export class Fountain extends Entity {
+    constructor(start_pos){
+        super(start_pos);
+
+        this.type = "Fountain";
+
+        this.box_dims = [10, 25, 50];
+
+        this.transform = this.transform
+            .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
+            .times(Mat4.translation(0, 0.69, 0));
+
+        this.model = new Shape_From_File("assets/fountain.obj");
+    }
+
+    transformModel(){
+        return this.transform
+            .times(Mat4.rotation(Math.PI/2, 0, 1, 0))
+            .times(Mat4.scale(1.9, 0.8, .4))
+            .times(Mat4.translation(0, 0, 0));
+    }
+
+    doMovement() { return; }
+}

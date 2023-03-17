@@ -1,7 +1,7 @@
 import {defs, tiny} from './provided/common.js';
 import {
     Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
-    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, PowellLib
+    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, PowellLib, Fountain
 } from "./shape-defs.js";
 
 import { Text_Line } from './provided/text-line.js'
@@ -146,6 +146,11 @@ class Main_Scene extends Scene {
                 color: hex_color("#b06b2a"),
                 ambient:1, diffusivity: 0.1, specularity: 0.1
             }),
+            fountain: new Material(new defs.Textured_Phong(), {
+               //texture: new Texture("assets/fountain.png"),
+                color: hex_color("#000000"),
+                ambient:1, diffusivity: 0.1, specularity: 0.1
+            }),
         }
 
         this.draw_hitboxes = true;
@@ -166,6 +171,9 @@ class Main_Scene extends Scene {
 
             // POWELL LIBRARY
             new PowellLib(vec3(40, this.buildingDims[1], 0)),
+
+            //FOUNTAIN
+            new Fountain(vec3(40, this.buildingDims[1], 0)),
         ];
 
         this.world = [
@@ -370,6 +378,10 @@ class Main_Scene extends Scene {
                             break;
                         case("Powell Library"):
                             model_mat = this.materials.brick;
+                            // model_mat = this.materials.powell_lib;
+                            break;
+                        case("Fountain"):
+                            model_mat = this.materials.fountain;
                             // model_mat = this.materials.powell_lib;
                             break;
                     }
