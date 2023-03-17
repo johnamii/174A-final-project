@@ -1,6 +1,6 @@
 import {defs, tiny} from './provided/common.js';
 import {
-    Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
+    Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface, Fountain,
     PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, Target, PowellLib, Flag
 } from "./shape-defs.js";
 
@@ -54,7 +54,6 @@ const difficulties = [
         max_target_spawn_distance: 0,
         num_obstacles: 0
     },
-
 ];
 
 var entities = [];
@@ -178,7 +177,11 @@ class Main_Scene extends Scene {
                 ambient: 1, diffusivity: 1, specularity: 1
             }),
             invincible: new Material(new defs.Textured_Phong(), {
-                texture: new Texture("assets/invincible.png", ),
+                texture: new Texture("assets/invincible.png"),
+                ambient: 1, diffusivity: 1, specularity: 1
+            }),
+            fountain: new Material(new defs.Textured_Phong(), {
+                texture: new Texture("assets/sidewalk-3.jpg"),
                 ambient: 1, diffusivity: 1, specularity: 1
             }),
             flag: new Material(new defs.Textured_Phong(), {
@@ -208,10 +211,10 @@ class Main_Scene extends Scene {
             new RoyceHall(vec3(-40, this.buildingDims[1], 0)),
             // POWELL LIBRARY
             new PowellLib(vec3(40, this.buildingDims[1], 0)),
-            //new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
             //FLAG
             new Flag(vec3(0, 0, -60)),
-
+            new Fountain(vec3(0, 0, 70), 0)
+            //new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
         ];
 
         this.world = [
@@ -386,13 +389,21 @@ class Main_Scene extends Scene {
         for (let i = 0; i < this.boundaries.length; i++) {
             const boundary = this.boundaries[i];
 
-            boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
+            if (this.draw_hitboxes) {
+                boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
+            }
 
             if(boundary.model !== null){
-                boundary.model.draw(context, program_state, boundary.transformModel(), this.materials.brick);
+                switch(boundary.type){
+                    case("Fountain"):
+                        var model_mat = this.materials.phong.override({color:hex_color("#ccbbbb")});
+                        break;
+                    default:
+                        model_mat = this.materials.brick;
+                }
+                boundary.model.draw(context, program_state, boundary.transformModel(), model_mat);
             }
         }
-
 
         // DRAW TEXTBOX OR ENTITIES
         if (this.in_between_levels) {

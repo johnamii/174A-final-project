@@ -601,20 +601,19 @@ export class Fountain extends Entity {
 
         this.type = "Fountain";
 
-        this.box_dims = [10, 25, 50];
+        this.box_dims = [5, 5, 5];
 
         this.transform = this.transform
             .times(Mat4.scale(this.box_dims[0], this.box_dims[1], this.box_dims[2]))
-            .times(Mat4.translation(0, 0.69, 0));
+            .times(Mat4.translation(0, 0.87, 0));
 
-        this.model = new Shape_From_File("assets/fountain.obj");
+        this.model = new Shape_From_File("assets/fountain.obj")
     }
 
     transformModel(){
         return this.transform
-            .times(Mat4.rotation(Math.PI/2, 0, 1, 0))
-            .times(Mat4.scale(1.9, 0.8, .4))
-            .times(Mat4.translation(0, 0, 0));
+            .times(Mat4.scale(.5, 1, .5))
+            .times(Mat4.translation(0, 0.75, 0));
     }
 
     doMovement() { return; }
