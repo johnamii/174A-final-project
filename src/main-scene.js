@@ -1,7 +1,7 @@
 import {defs, tiny} from './provided/common.js';
 import {
     Skybox, Starship, Ground, BoundaryBox, Axis, Text_Interface,
-    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, PowellLib, Fountain
+    PowellCat, PowerUp, getPosVector, Student, Wall, Obstacle, RoyceHall, Target, PowellLib
 } from "./shape-defs.js";
 
 import { Text_Line } from './provided/text-line.js'
@@ -15,63 +15,42 @@ const {
 var difficulty = 0;
 const difficulties = [
     {
-        num_students: 5,
+        num_students: 10,
         student_speed: 0.5,
         num_cats: 1,
         cat_speed: 0.5,
         min_cat_spawn_distance: 30,
         num_power_ups: 5,
         max_target_spawn_distance: 30,
-        num_obstacles: 2
-    },
-    {
-        num_students: 10,
-        student_speed: 0.6,
-        num_cats: 1,
-        cat_speed: 0.75,
-        min_cat_spawn_distance: 25,
-        num_power_ups: 4,
-        max_target_spawn_distance: 35,
-        num_obstacles: 4
+        num_obstacles: 3
     },
     {
         num_students: 15,
-        student_speed: 0.7,
+        student_speed: 0.6,
         num_cats: 2,
         cat_speed: 0.75,
-        min_cat_spawn_distance: 20,
+        min_cat_spawn_distance: 25,
         num_power_ups: 3,
-        max_target_spawn_distance: 40,
+        max_target_spawn_distance: 35,
         num_obstacles: 6
     },
     {
         num_students: 20,
-        student_speed: 0.8,
-        num_cats: 2,
-        cat_speed: 1,
-        min_cat_spawn_distance: 15,
-        num_power_ups: 2,
-        max_target_spawn_distance: 45,
-        num_obstacles: 8
-    },
-    {
-        num_students: 25,
-        student_speed: 0.9,
+        student_speed: 0.7,
         num_cats: 3,
-        cat_speed: 1,
-        min_cat_spawn_distance: 10,
+        cat_speed: 0.75,
+        min_cat_spawn_distance: 20,
         num_power_ups: 1,
-        max_target_spawn_distance: 50,
-        num_obstacles: 10
-    },
+        max_target_spawn_distance: 40,
+        num_obstacles: 9
+    }
 ];
 
 var entities = [];
 
 function loadEntities(difficultyMods) {
-    for (let i = 0; i < entities.length; i++){
-        delete entities[i]
-    }
+    entities.splice(0, entities.length);
+
     let arr = [];
 
     for (let i = 0; i < difficultyMods.num_cats; i++) {
@@ -85,8 +64,14 @@ function loadEntities(difficultyMods) {
     for (let i = 0; i < difficultyMods.num_obstacles; i++) {
         arr.push(new Obstacle(vec3(i*2, 0, i * 3)))
     }
-    return arr;
 
+    for (let i = 0; i < difficultyMods.num_power_ups; i++) {
+        arr.push(new PowerUp(vec3(i*4, 0, i*5)))
+    }
+
+    arr.push(new Target(vec3(0,0,-60)));
+
+    return arr;
 }
 
 class Main_Scene extends Scene {
@@ -98,7 +83,6 @@ class Main_Scene extends Scene {
         this.shapes = {
             axis: new Axis(),
             skybox: new Skybox(),
-            //building: new BoundaryBox(),
             text: new Text_Line(50)
         };
 
@@ -109,7 +93,7 @@ class Main_Scene extends Scene {
                 ambient: .5, diffusivity: .5, specularity: 0.5,
             }),
             brick: new Material(new defs.Textured_Phong(), {
-                texture: new Texture("assets/royce-hall.jpg"),
+                texture: new Texture("assets/bricks-3.jpg"),
                 color: hex_color("#b06b2a"),
                 ambient: .5, diffusivity: .6, 
             }),
@@ -119,9 +103,9 @@ class Main_Scene extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
             }),
             sidewalk: new Material(new defs.Textured_Phong(), {
-                texture: new Texture("assets/sidewalk-texture-1.jpg"),
-                color: hex_color("#000000"),
-                ambient: 1, diffusivity: 0.1, specularity: 0.1
+                texture: new Texture("assets/sidewalk-2.jpg"),
+                color: hex_color("#888888"),
+                ambient: 0.5, diffusivity: 0.1, specularity: 0.1
             }),
             text_image: new Material(new defs.Textured_Phong(), {
                 texture: new Texture("assets/text.png"),
@@ -141,16 +125,23 @@ class Main_Scene extends Scene {
                 color: hex_color("#b06b2a"),
                 ambient:1, diffusivity: 0.1, specularity: 0.1
             }),
-            powell_lib: new Material(new defs.Textured_Phong(), {
-                //texture: new Texture("assets/garfield.png"),
-                color: hex_color("#b06b2a"),
-                ambient:1, diffusivity: 0.1, specularity: 0.1
+            gene: new Material(new defs.Textured_Phong(),{
+                texture: new Texture("assets/dennis.jpg"),
+                color: hex_color("#ffffff"),
+                ambient:.5, diffusivity: 0.1, specularity: 0
             }),
-            fountain: new Material(new defs.Textured_Phong(), {
-               //texture: new Texture("assets/fountain.png"),
-                color: hex_color("#000000"),
-                ambient:1, diffusivity: 0.1, specularity: 0.1
+            mushroom: new Material(new defs.Textured_Phong(), {
+                texture: new Texture("assets/mushroom.png", ),
+                ambient: 1, diffusivity: 0.1, specularity: 1
             }),
+            star: new Material(new defs.Textured_Phong(), {
+                texture: new Texture("assets/star.png", ),
+                ambient: 1, diffusivity: 1, specularity: 1
+            }),
+            invincible: new Material(new defs.Textured_Phong(), {
+                texture: new Texture("assets/invincible.png", ),
+                ambient: 1, diffusivity: 1, specularity: 1
+            })
         }
 
         this.draw_hitboxes = true;
@@ -165,15 +156,16 @@ class Main_Scene extends Scene {
         entities = loadEntities(difficulties[this.difficulty]);
 
         this.buildingDims = vec3(10, 7, 20);
-        this.boundaries = [  
+        this.boundaries = [
+            // invisible border boundary
+            //new BoundaryBox(this.worldDims, vec3(0, 24.99, 0)),
+  
             // ROYCE HALL
+            //new BoundaryBox(this.buildingDims, vec3(-40, this.buildingDims[1], 0)),
             new RoyceHall(vec3(-40, this.buildingDims[1], 0)),
-
             // POWELL LIBRARY
             new PowellLib(vec3(40, this.buildingDims[1], 0)),
-
-            //FOUNTAIN
-            new Fountain(vec3(40, this.buildingDims[1], 0)),
+            //new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
         ];
 
         this.world = [
@@ -190,17 +182,15 @@ class Main_Scene extends Scene {
         this.in_between_levels = true;
 
         if (delivered === true) {
-            this.difficulty++;
+            if (this.difficulty < 2) {
+                this.difficulty++;
+            }
         }
         else {
             this.difficulty = 0;
         }
 
         entities = loadEntities(difficulties[this.difficulty]);
-
-        //vals = vals.concat(entities);
-        console.log(entities.length)
-        //console.log(vals.length)
     }
 
     make_control_panel(){
@@ -322,9 +312,7 @@ class Main_Scene extends Scene {
         for (let i = 0; i < this.boundaries.length; i++) {
             const boundary = this.boundaries[i];
 
-            if (this.draw_hitboxes){
-                boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
-            }
+            boundary.draw(context, program_state, boundary.transform, this.materials.basic, "LINES");
 
             if(boundary.model !== null){
                 boundary.model.draw(context, program_state, boundary.transformModel(), this.materials.brick);
@@ -340,23 +328,39 @@ class Main_Scene extends Scene {
             ////////////////////////////////////////////
             // ENTITIES
             ////////////////////////////////////////////
+
             if (this.sammy.health === ""){
                 this.drawGameOver(context, program_state);
                 return;
             }
+
             if (this.draw_hitboxes) {
                 this.sammy.draw(context, program_state, this.sammy.transform, this.materials.basic, "LINES");
             }
+
             let hearts = this.sammy.health;
             this.drawHealthBar(context, program_state, hearts);
-            this.sammy.model.draw(context, program_state, this.sammy.transformModel(), this.materials.phong.override({
+            let sammy_model_mat = this.materials.phong.override({
                 color: this.sammy.model_color
-            }));
+            });
+            
+            if (this.sammy.invincible > 0) {
+                this.sammy.invincible -= 0.01;
+                sammy_model_mat = this.materials.invincible;
+            }
+            this.sammy.model.draw(context, program_state, this.sammy.transformModel(), sammy_model_mat);
+
             this.sammy.doMovement(dt);
             
             for (let i = 0; i < entities.length; i++){
 
                 const entity = entities[i];
+
+                if (entity.active === false) {
+                    // remove inactive enemies
+                    entities.splice(i, 1);
+                }
+
                 const type = entity.type;
 
                 if (this.draw_hitboxes) {
@@ -365,12 +369,12 @@ class Main_Scene extends Scene {
 
                 if (entity.model !== null) {
                     
-                    let model_mat = this.materials.phong.override({
-                        color: entity.model_color
-                    });
                     switch(type){
+                        case("Gene"):
+                            model_mat = this.materials.gene;
+                            break;
                         case("Cat"):
-                            model_mat = this.materials.cat;
+                            var model_mat = this.materials.cat;
                             break;
                         case("Royce Hall"):
                             model_mat = this.materials.brick;
@@ -380,27 +384,34 @@ class Main_Scene extends Scene {
                             model_mat = this.materials.brick;
                             // model_mat = this.materials.powell_lib;
                             break;
-                        case("Fountain"):
-                            model_mat = this.materials.fountain;
-                            // model_mat = this.materials.powell_lib;
+                        case("Mushroom"):
+                            model_mat = this.materials.mushroom;
                             break;
+                        case("Star"):
+                            model_mat = this.materials.star;
+                            break;
+                        case("Wings"):
+                            model_mat = this.materials.phong.override({
+                                color:hex_color("#ffffff"), specularity:1, diffusivity: 1
+                            });
+                            break;
+                        default:
+                            model_mat = this.materials.phong.override({
+                                color: entity.model_color
+                            });
                     }
 
                     entity.model.draw(context, program_state, entity.transformModel(), model_mat);
                 }
 
                 // move entities
-                let target = null;
-                if(type === "Cat") {
-                    target = getPosVector(this.sammy.transform);
-                }
+                let target = type === "Cat" ? getPosVector(this.sammy.transform) : null;
                 entity.doMovement(dt, target);
-
             }
         }
 
         // check collisions
-        this.sammy.checkEntityCollisions(entities.concat(this.boundaries), t);
+        this.sammy.checkEntityCollisions(entities.concat(this.boundaries));
 
         for (let i = 0; i < entities.length; i++) {
             entities[i].checkEntityCollisions(this.boundaries);
