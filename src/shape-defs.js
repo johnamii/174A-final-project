@@ -221,7 +221,7 @@ class Entity extends Cube_Outline {
                 if(this.type === "Starship" && type === "Gene"){
                     this.nextLevel = true;
                 }
-                console.log(this.type + " collided with " + type);
+                //console.log(this.type + " collided with " + type);
 
                 this.onCollision(type, t);
 
@@ -301,6 +301,12 @@ export class Starship extends Entity {
                 return;
         }
         super.onCollision(colliderType);
+    }
+
+    reset_powerUps(){
+        this.invincible = 0;
+        this.speed_multiplier = 1;
+        this.jumpHeight = 1;
     }
 
     changeHealth(t){

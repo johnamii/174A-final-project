@@ -18,29 +18,23 @@ const difficulties = [
         student_speed: 0.75,
         num_cats: 1,
         cat_speed: 0.5,
-        min_cat_spawn_distance: 30,
         num_power_ups: 5,
-        max_target_spawn_distance: 30,
         num_obstacles: 3
     },
     {
         num_students: 15,
         student_speed: 0.6,
         num_cats: 2,
-        cat_speed: 0.9,
-        min_cat_spawn_distance: 25,
+        cat_speed: 1,
         num_power_ups: 3,
-        max_target_spawn_distance: 35,
         num_obstacles: 5
     },
     {
         num_students: 15,
         student_speed: 1,
         num_cats: 3,
-        cat_speed: 1,
-        min_cat_spawn_distance: 20,
+        cat_speed: 1.1,
         num_power_ups: 1,
-        max_target_spawn_distance: 40,
         num_obstacles: 7
     },
     {
@@ -48,9 +42,7 @@ const difficulties = [
         student_speed: 0,
         num_cats: 0,
         cat_speed: 0,
-        min_cat_spawn_distance: 0,
         num_power_ups: 0,
-        max_target_spawn_distance: 0,
         num_obstacles: 0
     },
 ];
@@ -59,6 +51,7 @@ var entities = [];
 
 function loadEntities(difficultyMods, curLevel) {
     entities.splice(0, entities.length);
+    console.log(curLevel);
 
     let arr = [];
 
@@ -91,6 +84,8 @@ function getRandomSpawn(type, flip){
     // z max -74, 74
 
     let x, z;
+
+    let leftRight = Math.random();
     switch(type){
         case("Object"):
             x = Math.random() * 50 - 25;//Math.random() * (max - min + 1) + min)
@@ -102,7 +97,10 @@ function getRandomSpawn(type, flip){
             break;
         case("Target"):
             let a = flip === true ? -1 : 1;
-            x = Math.random() * 79 - 40;
+            leftRight > 0.5
+                ? x = Math.random() * 30 - 7
+                : x = Math.random() * 30 + 7;
+            
             z = Math.random() * 8 + (a * 65);
             break;
     }
@@ -117,10 +115,8 @@ class Main_Scene extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 25, 85), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.shapes = {
-            axis: new Axis(),
             skybox: new Skybox(),
             text: new Text_Line(50),
-            cube: new defs.Cube()
         };
 
         // *** Materials
@@ -181,32 +177,26 @@ class Main_Scene extends Scene {
 
         this.worldDims = vec3(50, 25, 75);
 
-        const starshipSpawn = vec3(0, 2, 50);
-        this.sammy = new Starship(starshipSpawn, 1);
+        this.sammy = new Starship(vec3(0, 2, 50), 1);
 
         entities = loadEntities(difficulties[this.difficulty], this.difficulty);
 
         this.buildingDims = vec3(10, 7, 20);
         this.boundaries = [
-            // invisible border boundary
-            //new BoundaryBox(this.worldDims, vec3(0, 24.99, 0)),
   
             // ROYCE HALL
-            //new BoundaryBox(this.buildingDims, vec3(-40, this.buildingDims[1], 0)),
             new RoyceHall(vec3(-40, this.buildingDims[1], 0)),
             // POWELL LIBRARY
             new PowellLib(vec3(40, this.buildingDims[1], 0)),
             //FLAG
             new Flag(vec3(0, 0, -60)),
             new Fountain(vec3(0, 0, 70), 0)
-            //new BoundaryBox(this.buildingDims, vec3(40, this.buildingDims[1], 0))
         ];
 
         this.world = [
             // grass on ground
             new Ground(vec3(this.worldDims[0], 0.01, this.worldDims[2]), vec3(0, 0, 0), 4),
             // sidewalk
-            // dim, position
             new Ground(vec3(40, 1, 15), vec3(0, 0.03, 0), 32), // center horizontal
             new Ground(vec3(5, 1, 75), vec3(-4, 0.02, 0), 16), // left center vertical
             new Ground(vec3(5, 1, 75), vec3(4, 0.02, 0), 16), // right center vertical
@@ -220,6 +210,8 @@ class Main_Scene extends Scene {
     end_level(delivered){
         this.in_between_levels = true;
         this.sammy.nextLevel = false;
+        this.sammy.reset_powerUps();
+
         if (delivered === true) {
             if (this.difficulty < 3) {
                 this.difficulty++;
@@ -228,8 +220,9 @@ class Main_Scene extends Scene {
         else {
             this.difficulty = 0;
         }
+        console.log("diff: ", this.difficulty);
 
-        entities = loadEntities(difficulties[this.difficulty]);
+        entities = loadEntities(difficulties[this.difficulty], this.difficulty);
     }
 
     make_control_panel(){
@@ -254,16 +247,14 @@ class Main_Scene extends Scene {
 
         // lights
         program_state.lights = [
-            new Light(vec4(0, 10, 0, 1), color(1, 1, 1, 1), 1000),
-            new Light(vec4(-25, 10, 75, 1), color(1, 1, 1, 1), 1000),
-            new Light(vec4(25, 10, 75, 1), color(1, 1, 1, 1), 1000),
+            new Light(vec4(0, 10, 0, 1), color(1, 1, 1, 1), 1500),
+            // new Light(vec4(-25, 10, 75, 1), color(1, 1, 1, 1), 1000),
+            // new Light(vec4(25, 10, 75, 1), color(1, 1, 1, 1), 1000),
         ];
 
         // sky
         let sky_transform = Mat4.identity().times(Mat4.scale(150, 150, 150));
         this.shapes.skybox.draw(context, program_state, sky_transform, this.materials.basic);
-
-        //this.shapes.axis.draw(context, program_state, model_transform, this.materials.basic, 'LINES');
 
         // world
         for (let i = 0; i < this.world.length; i++) {
@@ -353,6 +344,7 @@ class Main_Scene extends Scene {
             this.drawEndGame(context, program_state);
             return;
         }
+
         ///////////////////////////////////////////
         // CONTEXT & WORLD
         ///////////////////////////////////////////
@@ -451,11 +443,8 @@ class Main_Scene extends Scene {
                             break;
                         case("Royce Hall"):
                             model_mat = this.materials.brick;
-                           // model_mat = this.materials.royce_hall;
-                            break;
                         case("Powell Library"):
                             model_mat = this.materials.brick;
-                            // model_mat = this.materials.powell_lib;
                             break;
                         case("Mushroom"):
                             model_mat = this.materials.mushroom;
