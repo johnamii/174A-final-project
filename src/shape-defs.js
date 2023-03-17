@@ -173,8 +173,9 @@ class Entity extends Cube_Outline {
 
         this.type = "Entity";
 
+        this.active = true;
         this.speed_multiplier = speed_mult ?? 1;
-        this.speed = this.speed_multiplier * meters_per_frame;
+        //this.speed = this.speed_multiplier * meters_per_frame;
         this.thrust = vec3(0, 0, 0);
         this.knockback = vec3(0, 0, 0);
         this.turn = 0;
@@ -231,7 +232,6 @@ class Entity extends Cube_Outline {
         this.knockback[0] = this.thrust[0] * -1;
         this.knockback[1] = this.thrust[1] * -1;
         this.knockback[2] = this.thrust[2] * -1;
-        console.log(this.type, this.thrust[2])
     }
 
     animate(){
@@ -239,7 +239,7 @@ class Entity extends Cube_Outline {
     }
 
     doMovement(dt){
-        let speed = dt * this.speed;
+        let speed = dt * this.speed_multiplier * meters_per_frame;
         let rot = dt * this.turn * 4;
         const x = [this.transform[0][3]];
         const y = [this.transform[2][3]];
@@ -273,18 +273,35 @@ export class Starship extends Entity {
         this.health = "XXX";
         this.type = "Starship";
         this.lastHit = null;
+        this.invincible = 0;
+        this.jumpHeight = 1;
+        
         this.model = new Shape_From_File("assets/starship.obj");
     }
 
     onCollision(colliderType, t){
-        super.onCollision(colliderType);
         if (colliderType === "Cat"){
             this.changeHealth(t);
         }
+        switch(colliderType){
+            case("Cat"):
+                this.changeHealth(t);
+                break;
+            case("Mushroom"):
+                this.speed_multiplier = 1.5;
+                return;
+            case("Star"):
+                this.invincible = 5;
+                return;
+            case("Wings"):
+                this.jumpHeight = 2;
+                return;
+        }
+        super.onCollision(colliderType);
     }
 
     changeHealth(t){
-        if (this.lastHit == null || t > (1 + this.lastHit)){
+        if (this.invincible <= 0 && (this.lastHit == null || t > (1 + this.lastHit))){
             if(this.health !==""){
                 this.health = this.health.substring(0, this.health.length-1);
             }
@@ -417,7 +434,47 @@ export class PowerUp extends Entity {
         super(start_pos);
 
         this.type = "PowerUp";
+        this.turn = 0.5;
 
+        this.a = Math.floor(Math.random() * 3);
+
+        switch(this.a){
+            case(0):
+                this.model = new Shape_From_File("assets/wings.obj");
+                this.type = "Wings";
+                //this.transform = this.transform.times(Mat4)
+                break;
+            case(1):
+                this.model = new Shape_From_File("assets/star.obj");
+                this.type = "Star";
+                break;
+            default:
+                this.model = new Shape_From_File("assets/mushroom.obj");
+                this.type = "Mushroom";
+        }
+        
+    }
+
+    doMovement(dt){
+        super.doMovement(dt);
+    }
+
+    onCollision(colliderType){
+        if (colliderType === "Starship"){
+            this.active = false;
+        }
+    }
+
+    transformModel(){
+        switch(this.a){
+            case(0):
+                return this.transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0));
+            case(1):
+                return this.transform.times(Mat4.scale(0.5, 0.5, 0.5));
+            default:
+                return this.transform.times(Mat4.rotation(-Math.PI/2, 0, 1, 0))
+            
+        }
     }
 }
 
