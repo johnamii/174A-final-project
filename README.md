@@ -9,4 +9,4 @@ To move the main camera, use controls like ```WASD```, ```space```, and `z`. Swi
 
 ### How it Works
 
-Every object on the screen is a child class of the main ```Entity``` parent class. Each object includes a checkCollisions(), onCollision() and doMovement() method that help calculate collisions an dmovements per frame and call the specific entity's behavior. Between every level, the list of entities is reset and new ones spawn randomly across the map.
+Every object on the screen is a child class of the main ```Entity``` parent class. Each object includes a checkCollisions(), onCollision() and doMovement() method that help calculate collisions and movements per frame and call the specific entity's behavior. Between every level, the list of entities is reset and new ones spawn randomly across the map.
