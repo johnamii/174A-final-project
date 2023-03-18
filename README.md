@@ -1,9 +1,7 @@
 # Starship: The Last Delivery
 
 ### What is Our Game?
-> as a Starship delivery bot, you must fight against all odds to deliver food to UCLA icon Gene Block
-* navigate around obstacles, collect power ups, and avoid hungry cats
-* to win, pass all three levels of difficulty -- each with added obstacles and cats
+As a Starship delivery bot, you must navigate around obstacles, collect power ups, and avoid hungry cats to deliver food to UCLA icon Gene Block. After passing three levels of difficulty, each with added obstacles/cats, you win!
 
 ### How to Play
 
