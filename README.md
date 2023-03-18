@@ -15,7 +15,4 @@
 
 ### How it Works
 
-* Each object on the screen is a child class of the main Entity parent class 
-* Every entity has a checkCollisions(), onCollision() and doMovement() method, as well as member variables that vary per type of Entity
-* Collisions and movements are calculated per entity in every frame, and objects will react differently when they collide with something
-* Everything occurs in the same scene: between every level, the list of entities is reset and new ones spawn randomly on the map
+Every object on the screen is a child class of the main ```Entity``` parent class. Each object includes a checkCollisions(), onCollision() and doMovement() method that help calculate collisions an dmovements per frame and call the specific entity's behavior. Between every level, the list of entities is reset and new ones spawn randomly across the map.
