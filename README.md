@@ -1,17 +1,13 @@
 # Starship: The Last Delivery
 
 ### What is Our Game?
-> as a Starship delivery bot, you must fights against all odds to deliver food to UCLA icon Gene Block
-* navigate around obstacles, collect power ups, and avoid cats chasing you to steal your food
-* to win, pass all three levels of difficulty -- each with more obstacles and cats than the last
+> as a Starship delivery bot, you must fight against all odds to deliver food to UCLA icon Gene Block
+* navigate around obstacles, collect power ups, and avoid hungry cats
+* to win, pass all three levels of difficulty -- each with added obstacles and cats
 
 ### How to Play
 
-* control the main camera using ```WASD```, ```space```, and `z`
-* change to the starship POV with ```ctrl + 0```
-* move around using the arrow keys and jump using ```shift```
-* display hitboxes by clicking key ```o```
-* collect power ups: mushroom (increase speed), star (grant invincibility), wings (higher jumps)
+To move the main camera, use controls like ```WASD```, ```space```, and `z`. Switch to the starship POV with ```ctrl + 0``` and display hitboxes with ```o```. Move around using arrow keys and ```shift``` to jump. Collect power ups like the mushroom (increase speed), star (grant invincibility), and wings (higher jumps).
 
 ### How it Works
 
