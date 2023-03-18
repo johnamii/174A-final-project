@@ -9,9 +9,9 @@
 
 ### How to play:
 
-* Control the camera with WASD, as well as "space" and "z" for up and down. Also, follow from the back of the starship by pressing "Ctrl + 0"
-* Move the Starship with the arrow keys, press "Shift" to jump
-* Press 'o' to show all the hitboxes of different entities.
+* Control the camera with WASD, as well as ```space``` and ```z``` for up and down. Also, follow from the back of the starship by pressing ```Ctrl + 0```
+* Move the Starship with the arrow keys, press ```Shift``` to jump
+* Press ```o``` to show all the hitboxes of different entities.
 * Try to collect power ups -- The mushroom will increase your speed, the star will make you invincible, the wings will let you jump higher
 
 ### How it works:
